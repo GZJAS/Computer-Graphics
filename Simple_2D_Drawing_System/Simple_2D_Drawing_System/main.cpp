@@ -10,6 +10,8 @@
 #include <OpenGL/glu.h>
 #include <GLUT/glut.h>
 #include <iostream>
+#include <stdlib.h>
+#include <math.h>
 
 float *PixelBuffer;
 int window_width = 200;
@@ -20,6 +22,38 @@ int PixelBufferSize = window_width * window_height * 3;
 void clearAllPixels();
 void setPixel(int x, int y, double c);
 void display();
+
+// Breseham line-drawing for |m| < 1.0
+void mLessThan1Plus(int x0, int y0, int xEnd, int yEnd){
+    int dx = std::abs(xEnd - x0), dy = std::abs(yEnd - y0);
+    int p = 2 * dy - dx;
+    int twoDy = 2 * dy, twoDyMinusDx = 2 * (dy - dx);
+    int x, y;
+    
+    // Determine which endpoint to use as start position
+    if (x0 > xEnd){
+        x = xEnd;
+        y = yEnd;
+        xEnd = x0;
+    }
+    else {
+        x = x0;
+        y = y0;
+    }
+    
+    setPixel(x, y, 1.0);
+    
+    while (x < xEnd){
+        x++;
+        if ( p < 0)
+            p+= twoDy;
+        else {
+            y++;
+            p += twoDyMinusDx;
+        }
+        setPixel(x,y, 1.0);
+    }
+}
 
 // clears all of the pixels from the screen
 void clearAllPixels(){
@@ -46,6 +80,7 @@ void display(){
     glClear(GL_COLOR_BUFFER_BIT);
     glLoadIdentity();
 
+    mLessThan1Plus(50, 50, 150, 100);
     //draws pixel on screen, width and height must match pixel buffer dimension
     glDrawPixels(window_width, window_height, GL_RGB, GL_FLOAT, PixelBuffer);
     
