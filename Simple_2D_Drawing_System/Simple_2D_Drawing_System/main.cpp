@@ -208,7 +208,7 @@ class Polygon {
     }
     
     ///
-    // Draw a filled polygon in the Canvas C.
+    // Draw a filled polygon
     //
     // The polygon has n distinct vertices.  The coordinates of the vertices
     // making up the polygon are stored in the x and y arrays.  The ith
@@ -229,9 +229,33 @@ class Polygon {
         processEdgeTable(finalEdgeTable);
     }
     
+
 }; // end class definition
 
 vector<Polygon *> all_polygons; // global variable to hold all polygons
+
+void drawOutlines(){
+    for(Polygon *polygon : all_polygons){
+        for(int i = 0; i < polygon->vertices.size()-1; i++){
+            float x1 = polygon->vertices[i][0];
+            float y1 = polygon->vertices[i][1];
+            float x2 = polygon->vertices[i+1][0];
+            float y2 = polygon->vertices[i+1][1];
+            drawLine(x1, y1, x2, y2, 1.0);
+
+        }
+
+        // connect starting vertice to ending vertice
+        float x1 = polygon->vertices[0][0];
+        float y1 = polygon->vertices[0][1];
+        float x2 = polygon->vertices[polygon->vertices.size()-1][0];
+        float y2 = polygon->vertices[polygon->vertices.size()-1][1];
+        drawLine(x1, y1, x2, y2, 1.0);
+
+
+
+    }
+}
 
 // draws a single line given a vertex pair and color
 // https://rosettacode.org/wiki/Bitmap/Bresenham%27s_line_algorithm#C.2B.2B
@@ -309,31 +333,11 @@ void display(){
     glClear(GL_COLOR_BUFFER_BIT);
     glLoadIdentity();
     
-    for(Polygon *polygon : all_polygons){
-        polygon->drawPolygon();
-    }
-    
-//    // For each polygon in our global all_polygons vector
 //    for(Polygon *polygon : all_polygons){
-//        for(int i = 0; i < polygon->vertices.size()-1; i++){
-//            float x1 = polygon->vertices[i][0];
-//            float y1 = polygon->vertices[i][1];
-//            float x2 = polygon->vertices[i+1][0];
-//            float y2 = polygon->vertices[i+1][1];
-//            drawLine(x1, y1, x2, y2, 1.0);
-//
-//        }
-//        
-//        // connect starting vertice to ending vertice
-//        float x1 = polygon->vertices[0][0];
-//        float y1 = polygon->vertices[0][1];
-//        float x2 = polygon->vertices[polygon->vertices.size()-1][0];
-//        float y2 = polygon->vertices[polygon->vertices.size()-1][1];
-//        drawLine(x1, y1, x2, y2, 1.0);
-//        
-//        
-//    
+//        polygon->drawPolygon();
 //    }
+    
+    drawOutlines();
 
     
     //draws pixel on screen, width and height must match pixel buffer dimension
