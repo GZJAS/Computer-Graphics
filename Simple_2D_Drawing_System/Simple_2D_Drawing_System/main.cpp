@@ -5,7 +5,7 @@
 //  Created by Dimitar Vasilev on 1/12/17.
 //
 //
-
+#include "Bucket.h"
 #include <OpenGL/gl.h>
 #include <OpenGL/glu.h>
 #include <GLUT/glut.h>
@@ -19,6 +19,7 @@
 #include <sstream>
 #include <cstdlib>
 #include <array>
+#include <list>
 
 using namespace std;
 
@@ -30,19 +31,210 @@ int PixelBufferSize = window_width * window_height * 3;
 void clearAllPixels();
 void setPixel(int x, int y, double c);
 void display();
+void drawLine(float x1, float y1, float x2, float y2, int color );
+
+/*
+ Compares the yMins of the given buckets parameters
+ 
+ @param edge1 First edge bucket
+ @param edge2 Second edge bucket
+ 
+ @return true if edge1's yMin < edge2's yMin, false otherwise
+ */
+bool minYCompare (Bucket* edge1, Bucket* edge2) {
+    return edge1->yMin < edge2->yMin;
+}
+
+/*
+ Compares the Xs of the given buckets parameters
+ 
+ @param edge1 First edge bucket
+ @param edge2 Second edge bucket
+ 
+ @return true if edge1's X is less than edge2 X, false otherwise
+ */
+bool xCompare (Bucket* edge1, Bucket* edge2) {
+    if (edge1->x < edge2->x) {
+        return true;
+    } else if (edge1->x > edge2->x) {
+        return false;
+    } else {
+        return ((edge1->dX / edge1->dY) < (edge2->dX / edge2->dY));
+    }
+}
+
+struct Vertex {
+    int x;
+    int y;
+};
 
 class Polygon {
     public:
-        vector<array<double, 2>> vertices;
+        /* data members */
+        vector<std::array<double, 2>> vertices;
+        vector<int> xc;
+        vector<int> yc;
+        int n;
     
-        Polygon(vector<array<double, 2>> vertices){
-            this->vertices = vertices;
+        /* member functions */
+        // constructor
+        Polygon(std::vector<std::array<double, 2>> points){
+            vertices = points;
+            for(auto it = vertices.begin(); it != vertices.end(); it++){
+                xc.push_back((*it)[0]);
+                yc.push_back((*it)[1]);
+            }
+            n = (int)vertices.size();
+            
         }
     
-};
+        // creates edge buckets from the given edges
+        list<Bucket*> createEdges () {
+            int startIndex = n - 1;
+            int yMax;
+            int yMin;
+            int initialX;
+            int sign;
+            int dX;
+            int dY;
+            Vertex v1;
+            Vertex v2;
+            Vertex tmp;
 
-vector<Polygon *> all_polygons;
+            list<Bucket*> edgeTable;   // list that contains all of the edges that make up the figure
+            
+            // Create the edge buckets and place in tempEdgeTable
+            for (int i = 0; i < n; i++) {
+                v1 = { xc[startIndex], yc[startIndex] };
+                v2 = { xc[i], yc[i] };
+                
+                // Check and swap vertices if not in left to right order
+                if (v2.x < v1.x) {
+                    tmp = v1;
+                    v1 = v2;
+                    v2 = tmp;
+                }
+                yMax = (v1.y > v2.y) ? v1.y : v2.y;
+                yMin = (v1.y < v2.y) ? v1.y : v2.y;
+                initialX = (v1.y < v2.y) ? v1.x : v2.x;
+                sign = ((v2.y - v1.y) < 0) ? -1 : 1;
+                dX = abs(v2.x - v1.x);
+                dY = abs(v2.y - v1.y);
+                
+                if (dY != 0) {
+                    Bucket *freshBucket = new Bucket;
+                    
+                    *freshBucket = {
+                        yMax,
+                        yMin,
+                        initialX,
+                        sign,
+                        dX,
+                        dY,
+                        0
+                    };
+                    
+                    
+                    edgeTable.push_back(freshBucket);
+                }
+                startIndex = i;
+            }
+            return edgeTable;
+        }
+    
+    // Given the edge table of the polygon, fill the polygons
+    void processEdgeTable (std::list<Bucket*> edgeTable) {
+        int scanLine = edgeTable.front()->yMin;
+        Bucket b1;
+        Bucket b2;
+        std::list<Bucket*> activeList;
+        
+        while (!edgeTable.empty()) {
+            // Remove edges from active list if y == ymax
+            if (!activeList.empty()) {
+                for (auto i = activeList.begin(); i != activeList.end();) {
+                    Bucket* curr = *i;
+                    
+                    if (curr->yMax == scanLine) {
+                        i = activeList.erase(i);
+                        edgeTable.remove (curr);
+                        delete (curr);
+                    } else {
+                        i++;
+                    }
+                }
+            }
+            
+            // Add edges from ET to AL if y == ymin
+            for (auto i = edgeTable.begin (); i != edgeTable.end(); i++) {
+                Bucket* edge = *i;
+                
+                if (edge->yMin == scanLine) {
+                    activeList.push_back(edge);
+                }
+            }
+            
+            // Sort by x & slope
+            activeList.sort(xCompare);
+            
+            // Fill polygon pixels
+            for (auto i = activeList.begin(); i != activeList.end(); i++) {
+                b1 = **i;
+                std::advance(i, 1);
+                b2 = **i;
+                
+                for (int x = b1.x; x < b2.x; x++) {
+                    setPixel(x, scanLine, 1.0);
+                }
+            }
+            
+            // Increment scanline
+            scanLine++;
+            
+            // Increment the X variables based on the slope
+            for (auto i = activeList.begin(); i != activeList.end(); i++) {
+                Bucket* edge = *i;
+                
+                if (edge->dX != 0) {
+                    edge->sum += edge->dX;
+                    
+                    while (edge->sum >= edge->dY) {
+                        edge->x += (edge->sign);
+                        edge->sum -= edge->dY;
+                    }
+                }
+            }
+        }
+    }
+    
+    ///
+    // Draw a filled polygon in the Canvas C.
+    //
+    // The polygon has n distinct vertices.  The coordinates of the vertices
+    // making up the polygon are stored in the x and y arrays.  The ith
+    // vertex will have coordinate (x[i],y[i]).
+    //
+    // @param n - number of vertices
+    // @param x - x coordinates
+    // @param y - y coordinates
+    ///
+    void drawPolygon() {
+        // Create Edge Table
+        list<Bucket*> finalEdgeTable = createEdges();
+        
+        // Sort edges by minY
+        finalEdgeTable.sort(minYCompare);
+        
+        // Process Edge Table and draw Polygon
+        processEdgeTable(finalEdgeTable);
+    }
+    
+}; // end class definition
 
+vector<Polygon *> all_polygons; // global variable to hold all polygons
+
+// draws a single line given a vertex pair and color
+// https://rosettacode.org/wiki/Bitmap/Bresenham%27s_line_algorithm#C.2B.2B
 void drawLine(float x1, float y1, float x2, float y2, int color )
 {
     // Bresenham's line algorithm
@@ -117,24 +309,31 @@ void display(){
     glClear(GL_COLOR_BUFFER_BIT);
     glLoadIdentity();
     
-    // For each polygon in our global all_polygons vector
     for(Polygon *polygon : all_polygons){
-        for(int i = 0; i < polygon->vertices.size()-1; i++){
-            float x1 = polygon->vertices[i][0];
-            float y1 = polygon->vertices[i][1];
-            float x2 = polygon->vertices[i+1][0];
-            float y2 = polygon->vertices[i+1][1];
-            drawLine(x1, y1, x2, y2, 1.0);
-
-        }
-        
-        // connect starting vertice to ending vertice
-        float x1 = polygon->vertices[0][0];
-        float y1 = polygon->vertices[0][1];
-        float x2 = polygon->vertices[polygon->vertices.size()-1][0];
-        float y2 = polygon->vertices[polygon->vertices.size()-1][1];
-        drawLine(x1, y1, x2, y2, 1.0);
+        polygon->drawPolygon();
     }
+    
+//    // For each polygon in our global all_polygons vector
+//    for(Polygon *polygon : all_polygons){
+//        for(int i = 0; i < polygon->vertices.size()-1; i++){
+//            float x1 = polygon->vertices[i][0];
+//            float y1 = polygon->vertices[i][1];
+//            float x2 = polygon->vertices[i+1][0];
+//            float y2 = polygon->vertices[i+1][1];
+//            drawLine(x1, y1, x2, y2, 1.0);
+//
+//        }
+//        
+//        // connect starting vertice to ending vertice
+//        float x1 = polygon->vertices[0][0];
+//        float y1 = polygon->vertices[0][1];
+//        float x2 = polygon->vertices[polygon->vertices.size()-1][0];
+//        float y2 = polygon->vertices[polygon->vertices.size()-1][1];
+//        drawLine(x1, y1, x2, y2, 1.0);
+//        
+//        
+//    
+//    }
 
     
     //draws pixel on screen, width and height must match pixel buffer dimension
