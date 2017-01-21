@@ -6,6 +6,7 @@
 //
 //
 #include "Bucket.h"
+#include "Point.h"
 #include <OpenGL/gl.h>
 #include <OpenGL/glu.h>
 #include <GLUT/glut.h>
@@ -23,36 +24,25 @@
 
 using namespace std;
 
-float *PixelBuffer;
+static int pid = 0;
+
 int window_width = 200;
 int window_height = 200;
 int PixelBufferSize = window_width * window_height * 3;
+float *PixelBuffer;
 
-void clearAllPixels();
-void setPixel(int x, int y, double c);
+// function prototypes
 void display();
-void drawLine(float x1, float y1, float x2, float y2, int color );
+void setPixel(int x, int y, double c);
+void clearAllPixels();
 
-/*
- Compares the yMins of the given buckets parameters
- 
- @param edge1 First edge bucket
- @param edge2 Second edge bucket
- 
- @return true if edge1's yMin < edge2's yMin, false otherwise
- */
+
+// Compares the yMins of the given buckets parameters
 bool minYCompare (Bucket* edge1, Bucket* edge2) {
     return edge1->yMin < edge2->yMin;
 }
 
-/*
- Compares the Xs of the given buckets parameters
- 
- @param edge1 First edge bucket
- @param edge2 Second edge bucket
- 
- @return true if edge1's X is less than edge2 X, false otherwise
- */
+//Compares the Xs of the given buckets parameters
 bool xCompare (Bucket* edge1, Bucket* edge2) {
     if (edge1->x < edge2->x) {
         return true;
@@ -62,19 +52,125 @@ bool xCompare (Bucket* edge1, Bucket* edge2) {
         return ((edge1->dX / edge1->dY) < (edge2->dX / edge2->dY));
     }
 }
-
-struct Vertex {
-    int x;
-    int y;
+class Line {
+public:
+    /* data members */
+    std::vector<std::array<double, 2>> vertices;
+    double x1, y1, x2, y2, id, n;
+    int color = 1.0;
+    
+    
+    /* member functions */
+    Line(std::vector<std::array<double, 2>> points){
+        vertices = points;
+        x1 = vertices.at(0)[0];
+        y1 = vertices.at(0)[1];
+        x2 = vertices.at(1)[0];
+        y2 = vertices.at(1)[1];
+        id = ::pid++;
+        n = (int)vertices.size();
+    }
+    
+    Line(double x1, double y1, double x2, double y2){
+        this->x1 = x1;
+        this->y1 = y1;
+        this->x2 = x2;
+        this->y2 = y2;
+    }
+    
+    
+    // draws a single line given a vertex pair and color according to DDA algorithm
+    void lineDDA()
+    {
+        float dX,dY,iSteps;
+        float xInc,yInc,iCount,x,y;
+        
+        dX = x1 - x2;
+        dY = y1 - y2;
+        
+        if (fabs(dX) > fabs(dY))
+        {
+            iSteps = fabs(dX);
+        }
+        else
+        {
+            iSteps = fabs(dY);
+        }
+        
+        xInc = dX/iSteps;
+        yInc = dY/iSteps;
+        
+        x = x1;
+        y = y1;
+        
+        for (iCount=1; iCount<=iSteps; iCount++)
+        {
+            setPixel(floor(x),floor(y),color);
+            x -= xInc;
+            y -= yInc;
+        }
+        return;
+    }
+    
+    
+    // draws a single line given a vertex pair and color according to Bresenham algorithm
+    void lineBres()
+    {
+        // Bresenham's line algorithm
+        
+        const bool steep = (fabs(y2 - y1) > fabs(x2 - x1));
+        
+        if(steep)
+            // dy > dx, therefore slope > 1
+        {
+            std::swap(x1, y1);
+            std::swap(x2, y2);
+        }
+        
+        if(x1 > x2)
+            // going from left to right, make sure left is smaller of two
+        {
+            std::swap(x1, x2);
+            std::swap(y1, y2);
+        }
+        
+        const float dx = x2 - x1;
+        const float dy = fabs(y2 - y1);
+        
+        float error = dx / 2.0f;
+        const int ystep = (y1 < y2) ? 1 : -1;
+        int y = (int)y1;
+        
+        const int maxX = (int)x2;
+        
+        for(int x=(int)x1; x<maxX; x++)
+        {
+            if(steep)
+            {
+                setPixel(y,x, color);
+            }
+            else
+            {
+                setPixel(x,y, color);
+            }
+            
+            error -= dy;
+            if(error < 0)
+            {
+                y += ystep;
+                error += dx;
+            }
+        }
+    }
 };
 
 class Polygon {
     public:
         /* data members */
-        vector<std::array<double, 2>> vertices;
-        vector<int> xc;
-        vector<int> yc;
-        int n;
+        std::vector<std::array<double, 2>> vertices;
+        std::vector<int> xc;
+        std::vector<int> yc;
+        int n, id;
     
         /* member functions */
         // constructor
@@ -85,11 +181,12 @@ class Polygon {
                 yc.push_back((*it)[1]);
             }
             n = (int)vertices.size();
+            id = ::pid++;
             
         }
     
         // creates edge buckets from the given edges
-        list<Bucket*> createEdges () {
+        std::list<Bucket*> createEdges () {
             int startIndex = n - 1;
             int yMax;
             int yMin;
@@ -97,11 +194,11 @@ class Polygon {
             int sign;
             int dX;
             int dY;
-            Vertex v1;
-            Vertex v2;
-            Vertex tmp;
+            Point v1;
+            Point v2;
+            Point tmp;
 
-            list<Bucket*> edgeTable;   // list that contains all of the edges that make up the figure
+            std::list<Bucket*> edgeTable;   // list that contains all of the edges that make up the figure
             
             // Create the edge buckets and place in tempEdgeTable
             for (int i = 0; i < n; i++) {
@@ -207,20 +304,10 @@ class Polygon {
         }
     }
     
-    ///
     // Draw a filled polygon
-    //
-    // The polygon has n distinct vertices.  The coordinates of the vertices
-    // making up the polygon are stored in the x and y arrays.  The ith
-    // vertex will have coordinate (x[i],y[i]).
-    //
-    // @param n - number of vertices
-    // @param x - x coordinates
-    // @param y - y coordinates
-    ///
     void drawPolygon() {
         // Create Edge Table
-        list<Bucket*> finalEdgeTable = createEdges();
+        std::list<Bucket*> finalEdgeTable = createEdges();
         
         // Sort edges by minY
         finalEdgeTable.sort(minYCompare);
@@ -229,93 +316,32 @@ class Polygon {
         processEdgeTable(finalEdgeTable);
     }
     
+    // Draw outline of polygon
+    void drawOutlines(){
+        for(int i = 0; i < vertices.size()-1; i++){
+            float x1 = vertices[i][0];
+            float y1 = vertices[i][1];
+            float x2 = vertices[i+1][0];
+            float y2 = vertices[i+1][1];
+            Line line(x1, y1, x2, y2);
+            line.lineBres();
+            
+        }
+        
+        // connect starting vertice to ending vertice
+        float x1 = vertices[0][0];
+        float y1 = vertices[0][1];
+        float x2 = vertices[vertices.size()-1][0];
+        float y2 = vertices[vertices.size()-1][1];
+        Line line(x1, y1, x2, y2);
+        line.lineBres();
+    }
+
 
 }; // end class definition
 
-vector<Polygon *> all_polygons; // global variable to hold all polygons
-
-void drawOutlines(){
-    for(Polygon *polygon : all_polygons){
-        for(int i = 0; i < polygon->vertices.size()-1; i++){
-            float x1 = polygon->vertices[i][0];
-            float y1 = polygon->vertices[i][1];
-            float x2 = polygon->vertices[i+1][0];
-            float y2 = polygon->vertices[i+1][1];
-            drawLine(x1, y1, x2, y2, 1.0);
-
-        }
-
-        // connect starting vertice to ending vertice
-        float x1 = polygon->vertices[0][0];
-        float y1 = polygon->vertices[0][1];
-        float x2 = polygon->vertices[polygon->vertices.size()-1][0];
-        float y2 = polygon->vertices[polygon->vertices.size()-1][1];
-        drawLine(x1, y1, x2, y2, 1.0);
-
-
-
-    }
-}
-
-// draws a single line given a vertex pair and color
-// https://rosettacode.org/wiki/Bitmap/Bresenham%27s_line_algorithm#C.2B.2B
-void drawLine(float x1, float y1, float x2, float y2, int color )
-{
-    // Bresenham's line algorithm
-    
-    const bool steep = (fabs(y2 - y1) > fabs(x2 - x1));
-    
-    if(steep)
-    // dy > dx, therefore slope > 1
-    {
-        swap(x1, y1);
-        swap(x2, y2);
-    }
-    
-    if(x1 > x2)
-    // going from left to right, make sure left is smaller of two
-    {
-        swap(x1, x2);
-        swap(y1, y2);
-    }
-    
-    const float dx = x2 - x1;
-    const float dy = fabs(y2 - y1);
-    
-    float error = dx / 2.0f;
-    const int ystep = (y1 < y2) ? 1 : -1;
-    int y = (int)y1;
-    
-    const int maxX = (int)x2;
-    
-    for(int x=(int)x1; x<maxX; x++)
-    {
-        if(steep)
-        {
-            setPixel(y,x, 1.0);
-        }
-        else
-        {
-            setPixel(x,y, 1.0);
-        }
-        
-        error -= dy;
-        if(error < 0)
-        {
-            y += ystep;
-            error += dx;
-        }
-    }
-}
-
-// clears all of the pixels from the screen
-void clearAllPixels(){
-    for(int i = 0; i < window_width; i++){
-        for(int j = 0; j < window_height; j++){
-            setPixel(i, j, 1.0);
-        }
-    }
-}
+std::vector<Polygon *> all_polygons; // global variable to hold all polygons
+std::vector<Line *> all_lines; // global variable to hold all polygons
 
 // sets the local in pixelBuffer to c given x and y coordinates
 void setPixel(int x, int y, double c){
@@ -324,21 +350,36 @@ void setPixel(int x, int y, double c){
         PixelBuffer[i + j] = c;
     }
     return;
+    
+}
+
+// clears all of the pixels from the screen
+void clearAllPixels(){
+    for(int i = 0; i < window_width; i++){
+        for(int j = 0; j < window_height; j++){
+            setPixel(i, j, 0.0);
+        }
+    }
 }
 
 // main display loop, this function will be called again and again by OpenGL
 void display(){
     
+    clearAllPixels();
+    
     //Misc.
     glClear(GL_COLOR_BUFFER_BIT);
     glLoadIdentity();
     
-//    for(Polygon *polygon : all_polygons){
-//        polygon->drawPolygon();
-//    }
+    for(Polygon *polygon : all_polygons){
+        polygon->drawOutlines();
+        std::cout << "poly size: " << polygon->n << std::endl;
+    }
     
-    drawOutlines();
-
+    for(Line *line : all_lines){
+        line->lineDDA();
+        std::cout << "line size: " << line->n << std::endl;
+    }
     
     //draws pixel on screen, width and height must match pixel buffer dimension
     glDrawPixels(window_width, window_height, GL_RGB, GL_FLOAT, PixelBuffer);
@@ -348,80 +389,62 @@ void display(){
 }
 
 
-
 int main(int argc, char *argv[]){
     
-    int numPolygons;
-    string line;
+    int numPolygons, numPoints = 0;
+    std::string chars;
     
-    ifstream inputFile("input.txt");
+    std::ifstream inputFile("input.txt");
     
     if(!inputFile){
-        cerr << "File could not be opened" << endl;
+        std::cerr << "File could not be opened" << std::endl;
     }
     
     // read in first line of file = number of polygons we are creating
-    getline(inputFile, line);
-    numPolygons = atoi(line.c_str());
-    cout << "numPolygons: " << numPolygons << endl;
+    getline(inputFile, chars);
+    numPolygons = atoi(chars.c_str());
+    std::cout << "numPolygons: " << numPolygons << std::endl;
     
-    // containers to hold coordinates and polygons
-    vector<array<double, 2>>points;
-    vector<vector<array<double, 2>>> polygons;
+    // container to hold coordinates
+    std::vector<std::array<double, 2>>points;
+    
+    getline(inputFile, chars);
     
     // read in file
     while(!inputFile.eof()){
         
-        getline(inputFile, line);
-        cout << line << endl;
-        // if empty space, we've reached the start of a new polygon
-        if (line == ""){
-            getline(inputFile, line);
-            if (!points.empty()){
-                polygons.push_back(points);
+        while(chars != ""){
+            std::istringstream iss;
+            iss.str(chars);
+            std::string val1, val2;
+            iss >> val1 >> val2;
+            double x = std::stod(val1);
+            double y = std::stod(val2);
+            std::cout << "val1 = " << val1 << std::endl;
+            std::cout << "val2 = " << val2 << std::endl;
+            std::cout << std::endl;
+            std::array<double, 2>coordinates = {x, y};
+            points.push_back(coordinates);
+            getline(inputFile, chars);
+        }
+        
+        if(!points.empty()){
+            if (numPoints == 2){
+                std::cout << "line" << std::endl;
+                Line *line = new Line(points);
+                all_lines.push_back(line);
+            }
+            else if (numPoints > 2){
                 Polygon *polygon = new Polygon(points);
                 all_polygons.push_back(polygon);
-                points.clear();
             }
+            points.clear();
         }
-        else {
-            istringstream iss;
-            iss.str(line);
-            string val1, val2;
-            iss >> val1 >> val2;
-            double x = stod(val1);
-            double y = stod(val2);
-            array<double, 2>coordinates = {x, y};
-            points.push_back(coordinates);
-        }
+        
+        getline(inputFile, chars);
+        numPoints = atoi(chars.c_str());
+        getline(inputFile, chars);
     }
-
-    // ***** FOR DEBUGGING PURPOSES ONLY *****
-    /**************
-    cout << "polygons"<< endl;
-    for (int i = 0; i < polygons.size(); i++)
-    {
-        for (int j = 0; j < polygons[i].size(); j++)
-        {
-            for(int k = 0; k < 2; k++){
-                cout << polygons[i][j][k] << " ";
-            }
-            cout << endl;
-            
-        }
-        cout << endl;
-    }
-    
-    if(all_polygons.size() == numPolygons){
-        cout << "Same size" << endl;
-    }
-    else {
-        cout << "polygons.size() = " << polygons.size() << endl;
-        cout << "numPolygons = " << numPolygons << endl;
-    }
-    
-    cout << "end polygons" << endl;
-    ****************/
     
     //allocate new pixel buffer, need initialization!!
     PixelBuffer = new float[PixelBufferSize];
@@ -439,7 +462,7 @@ int main(int argc, char *argv[]){
     //sets display function
     glutDisplayFunc(display);
     
-    glutMainLoop();//main display loop, will display until terminate
+    glutMainLoop(); //main display loop, will display until terminate
     return 0;
 }
 

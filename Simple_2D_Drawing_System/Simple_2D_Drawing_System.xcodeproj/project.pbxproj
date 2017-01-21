@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		430C13B71E3334F700ECFFBC /* Bucket.h in Sources */ = {isa = PBXBuildFile; fileRef = 430A9B2A1E303A68008C42EB /* Bucket.h */; };
+		430C13B81E3334F700ECFFBC /* Point.h in Sources */ = {isa = PBXBuildFile; fileRef = 430A9B2F1E3080D8008C42EB /* Point.h */; };
 		43E9606A1E284CB30016071F /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 43E960691E284CB30016071F /* main.cpp */; };
 		43E960721E284CBC0016071F /* GLUT.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 43E960711E284CBC0016071F /* GLUT.framework */; };
 		43E960741E284CC20016071F /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 43E960731E284CC20016071F /* OpenGL.framework */; };
@@ -26,6 +28,7 @@
 
 /* Begin PBXFileReference section */
 		430A9B2A1E303A68008C42EB /* Bucket.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Bucket.h; sourceTree = "<group>"; };
+		430A9B2F1E3080D8008C42EB /* Point.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Point.h; sourceTree = "<group>"; };
 		431625981E2B2A7400C9F318 /* input.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = input.txt; sourceTree = "<group>"; };
 		43E960661E284CB30016071F /* Simple_2D_Drawing_System */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Simple_2D_Drawing_System; sourceTree = BUILT_PRODUCTS_DIR; };
 		43E960691E284CB30016071F /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
@@ -67,6 +70,7 @@
 			isa = PBXGroup;
 			children = (
 				430A9B2A1E303A68008C42EB /* Bucket.h */,
+				430A9B2F1E3080D8008C42EB /* Point.h */,
 				43E960691E284CB30016071F /* main.cpp */,
 				431625981E2B2A7400C9F318 /* input.txt */,
 			);
@@ -138,6 +142,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				430C13B71E3334F700ECFFBC /* Bucket.h in Sources */,
+				430C13B81E3334F700ECFFBC /* Point.h in Sources */,
 				43E9606A1E284CB30016071F /* main.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
