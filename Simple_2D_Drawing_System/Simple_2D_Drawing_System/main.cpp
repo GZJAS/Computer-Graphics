@@ -30,6 +30,9 @@ int window_width = 200;
 int window_height = 200;
 int PixelBufferSize = window_width * window_height * 3;
 float *PixelBuffer;
+float xmin = 65, xmax = 90, ymin = 50, ymax = 100;
+enum{TOP=0x1,BOTTOM=0x2,RIGHT=0x4,LEFT=0x8};
+
 
 // function prototypes
 void display();
@@ -114,8 +117,7 @@ public:
     
     
     // draws a single line given a vertex pair and color according to Bresenham algorithm
-    void lineBres()
-    {
+    void lineBres(){
         // Bresenham's line algorithm
         
         const bool steep = (fabs(y2 - y1) > fabs(x2 - x1));
@@ -123,15 +125,15 @@ public:
         if(steep)
             // dy > dx, therefore slope > 1
         {
-            std::swap(x1, y1);
-            std::swap(x2, y2);
+            swap(x1, y1);
+            swap(x2, y2);
         }
         
         if(x1 > x2)
             // going from left to right, make sure left is smaller of two
         {
-            std::swap(x1, x2);
-            std::swap(y1, y2);
+            swap(x1, x2);
+            swap(y1, y2);
         }
         
         const float dx = x2 - x1;
@@ -147,11 +149,11 @@ public:
         {
             if(steep)
             {
-                setPixel(y,x, color);
+                setPixel(y, x, color);
             }
             else
             {
-                setPixel(x,y, color);
+                setPixel(x, y, color);
             }
             
             error -= dy;
@@ -162,6 +164,85 @@ public:
             }
         }
     }
+    
+    unsigned int code(float x,float y){
+        unsigned int code=0;
+        if(y>ymax)
+            code|=TOP;
+        if(y<ymin)
+            code|=BOTTOM;
+        if(x>xmax)
+            code|=RIGHT;
+        if(x<xmin)
+            code|=LEFT;
+        return code;
+    }
+    
+    void clipLine(){
+        unsigned int outcode0,outcode1,outcodeout;
+        bool accept = false, done = false;
+        outcode0 = code(x1,y1);
+        outcode1 = code(x2,y2);
+        cout<<"outcode0="<<outcode0<<endl;
+        cout<<"outcode1="<<outcode1<<endl;
+        do
+        {
+            if(outcode0 == 0 && outcode1==0)
+            {
+                accept = true;
+                done = true;
+            }
+            else if(outcode0 & outcode1)
+            {
+                std::cout << "same outcodes" << std::endl;
+                done = true;
+            }
+            else
+            {
+                float x,y;
+                int ocd=outcode0 ? outcode0 : outcode1;
+                if(ocd & TOP)
+                {
+                    x=x1+(x2-x1)*(ymax-y1)/(y2-y1);
+                    y=ymax;
+                }
+                else if(ocd & BOTTOM)
+                {
+                    x=x1+(x2-x1)*(ymin-y1)/(y2-y1);
+                    y=ymin;
+                }
+                else if(ocd & LEFT)
+                {
+                    y=y1+(y2-y1)*(xmin-x1)/(x2-x1);
+                    x=xmin;
+                }
+                else
+                {
+                    y=y1+(y2-y1)*(xmax-x1)/(x2-x1);
+                    x=xmax;
+                }
+                if(ocd==outcode0)
+                {
+                    x1=x;
+                    y1=y;
+                    outcode0=code(x1,y1);
+                }
+                else
+                {
+                    x2=x;
+                    y2=y;
+                    outcode1=code(x2,y2);
+                }
+            }
+            
+        }while(done == false);
+        
+        //            if(accept==TRUE)
+        //            {
+        //                line(x0,y0,x1,y1);
+        //            }
+    }
+    
 };
 
 class Polygon {
@@ -362,6 +443,7 @@ void clearAllPixels(){
     }
 }
 
+
 // main display loop, this function will be called again and again by OpenGL
 void display(){
     
@@ -372,14 +454,17 @@ void display(){
     glLoadIdentity();
     
     for(Polygon *polygon : all_polygons){
-        polygon->drawOutlines();
-        std::cout << "poly size: " << polygon->n << std::endl;
+        polygon->drawPolygon();
     }
     
-    for(Line *line : all_lines){
-        line->lineDDA();
-        std::cout << "line size: " << line->n << std::endl;
+    for(Line *line : all_lines ){
+//        for(int i = 0; i < line->vertices.size(); i++){
+//            cout << line->vertices.at(i) << " " << endl;
+//        }
+//        cout << endl;
+        cout << line->n << endl;
     }
+    
     
     //draws pixel on screen, width and height must match pixel buffer dimension
     glDrawPixels(window_width, window_height, GL_RGB, GL_FLOAT, PixelBuffer);
