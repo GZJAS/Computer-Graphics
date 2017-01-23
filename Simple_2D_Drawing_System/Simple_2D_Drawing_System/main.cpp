@@ -35,7 +35,7 @@ enum{TOP=0x1,BOTTOM=0x2,RIGHT=0x4,LEFT=0x8};
 
 
 // function prototypes
-void display();
+void update();
 void setPixel(int x, int y, double c);
 void clearAllPixels();
 
@@ -55,16 +55,28 @@ bool xCompare (Bucket* edge1, Bucket* edge2) {
         return ((edge1->dX / edge1->dY) < (edge2->dX / edge2->dY));
     }
 }
-class Line {
+
+class Geometry {
+    public:
+        std::vector<std::array<float, 2>> vertices;
+        int n, id;
+    
+};
+
+
+// function prototype
+int getPosByID(std::vector<Geometry *> vect, Geometry *obj);
+
+class Line : public Geometry {
 public:
     /* data members */
-    std::vector<std::array<double, 2>> vertices;
-    double x1, y1, x2, y2, id, n;
+    std::vector<std::array<float, 2>> vertices;
+    float x1, y1, x2, y2;
     int color = 1.0;
     
     
     /* member functions */
-    Line(std::vector<std::array<double, 2>> points){
+    Line(std::vector<std::array<float, 2>> points){
         vertices = points;
         x1 = vertices.at(0)[0];
         y1 = vertices.at(0)[1];
@@ -74,7 +86,7 @@ public:
         n = (int)vertices.size();
     }
     
-    Line(double x1, double y1, double x2, double y2){
+    Line(float x1, float y1, float x2, float y2){
         this->x1 = x1;
         this->y1 = y1;
         this->x2 = x2;
@@ -118,34 +130,38 @@ public:
     
     // draws a single line given a vertex pair and color according to Bresenham algorithm
     void lineBres(){
-        // Bresenham's line algorithm
         
         const bool steep = (fabs(y2 - y1) > fabs(x2 - x1));
+        
+        float _x1 = x1;
+        float _x2 = x2;
+        float _y1 = y1;
+        float _y2 = y2;
         
         if(steep)
             // dy > dx, therefore slope > 1
         {
-            swap(x1, y1);
-            swap(x2, y2);
+            std::swap(_x1, _y1);
+            std::swap(_x2, _y2);
         }
         
-        if(x1 > x2)
+        if(_x1 > _x2)
             // going from left to right, make sure left is smaller of two
         {
-            swap(x1, x2);
-            swap(y1, y2);
+            std::swap(_x1, _x2);
+            std::swap(_y1, _y2);
         }
         
-        const float dx = x2 - x1;
-        const float dy = fabs(y2 - y1);
+        const float dx = _x2 - _x1;
+        const float dy = fabs(_y2 - _y1);
         
         float error = dx / 2.0f;
-        const int ystep = (y1 < y2) ? 1 : -1;
-        int y = (int)y1;
+        const int ystep = (_y1 < _y2) ? 1 : -1;
+        int y = (int)_y1;
         
-        const int maxX = (int)x2;
+        const int maxX = (int)_x2;
         
-        for(int x=(int)x1; x<maxX; x++)
+        for(int x=(int)_x1; x<maxX; x++)
         {
             if(steep)
             {
@@ -178,13 +194,19 @@ public:
         return code;
     }
     
-    void clipLine(){
-        unsigned int outcode0,outcode1,outcodeout;
+    int clipLine(){
+        unsigned int outcode0,outcode1;
         bool accept = false, done = false;
-        outcode0 = code(x1,y1);
-        outcode1 = code(x2,y2);
-        cout<<"outcode0="<<outcode0<<endl;
-        cout<<"outcode1="<<outcode1<<endl;
+        
+        float _x1 = x1;
+        float _x2 = x2;
+        float _y1 = y1;
+        float _y2 = y2;
+        
+        
+        outcode0 = code(_x1,_y1);
+        outcode1 = code(_x2,_y2);
+
         do
         {
             if(outcode0 == 0 && outcode1==0)
@@ -194,7 +216,6 @@ public:
             }
             else if(outcode0 & outcode1)
             {
-                std::cout << "same outcodes" << std::endl;
                 done = true;
             }
             else
@@ -203,59 +224,65 @@ public:
                 int ocd=outcode0 ? outcode0 : outcode1;
                 if(ocd & TOP)
                 {
-                    x=x1+(x2-x1)*(ymax-y1)/(y2-y1);
+                    x=_x1+(_x2-_x1)*(ymax-_y1)/(_y2-_y1);
                     y=ymax;
                 }
                 else if(ocd & BOTTOM)
                 {
-                    x=x1+(x2-x1)*(ymin-y1)/(y2-y1);
+                    x=_x1+(_x2-_x1)*(ymin-_y1)/(_y2-_y1);
                     y=ymin;
                 }
                 else if(ocd & LEFT)
                 {
-                    y=y1+(y2-y1)*(xmin-x1)/(x2-x1);
+                    y=_y1+(_y2-_y1)*(xmin-_x1)/(_x2-_x1);
                     x=xmin;
                 }
                 else
                 {
-                    y=y1+(y2-y1)*(xmax-x1)/(x2-x1);
+                    y=_y1+(_y2-_y1)*(xmax-_x1)/(_x2-_x1);
                     x=xmax;
                 }
                 if(ocd==outcode0)
                 {
-                    x1=x;
-                    y1=y;
-                    outcode0=code(x1,y1);
+                    _x1=x;
+                    _y1=y;
+                    outcode0=code(_x1,_y1);
                 }
                 else
                 {
-                    x2=x;
-                    y2=y;
-                    outcode1=code(x2,y2);
+                    _x2=x;
+                    _y2=y;
+                    outcode1=code(_x2,_y2);
                 }
             }
             
-        }while(done == false);
+        }
+        while(done == false);
         
-        //            if(accept==TRUE)
-        //            {
-        //                line(x0,y0,x1,y1);
-        //            }
+        if(accept == true){
+            x1 = _x1;
+            y1 = _y1;
+            x2 = _x2;
+            y2 = _y2;
+            lineBres();
+            cout << "clipLine returned 1" << endl;
+            return 1;
+        }
+        cout << "clipLine returned -1" << endl;
+        return -1;
     }
     
 };
 
-class Polygon {
+class Polygon : public Geometry {
     public:
         /* data members */
-        std::vector<std::array<double, 2>> vertices;
         std::vector<int> xc;
         std::vector<int> yc;
-        int n, id;
     
         /* member functions */
         // constructor
-        Polygon(std::vector<std::array<double, 2>> points){
+        Polygon(std::vector<std::array<float, 2>> points){
             vertices = points;
             for(auto it = vertices.begin(); it != vertices.end(); it++){
                 xc.push_back((*it)[0]);
@@ -405,7 +432,7 @@ class Polygon {
             float x2 = vertices[i+1][0];
             float y2 = vertices[i+1][1];
             Line line(x1, y1, x2, y2);
-            line.lineBres();
+            line.lineDDA();
             
         }
         
@@ -415,7 +442,7 @@ class Polygon {
         float x2 = vertices[vertices.size()-1][0];
         float y2 = vertices[vertices.size()-1][1];
         Line line(x1, y1, x2, y2);
-        line.lineBres();
+        line.lineDDA();
     }
 
 
@@ -423,6 +450,17 @@ class Polygon {
 
 std::vector<Polygon *> all_polygons; // global variable to hold all polygons
 std::vector<Line *> all_lines; // global variable to hold all polygons
+
+int getPosByID(std::vector<Line *> vect, Line *obj){
+    for(int i = 0; i < vect.size(); i++){
+        if (vect[i]->id == obj->id){
+            return i;
+        }
+    }
+    
+    return -1;
+}
+
 
 // sets the local in pixelBuffer to c given x and y coordinates
 void setPixel(int x, int y, double c){
@@ -433,6 +471,8 @@ void setPixel(int x, int y, double c){
     return;
     
 }
+
+
 
 // clears all of the pixels from the screen
 void clearAllPixels(){
@@ -445,26 +485,53 @@ void clearAllPixels(){
 
 
 // main display loop, this function will be called again and again by OpenGL
-void display(){
+void update(){
     
-    clearAllPixels();
+    cout << "eqwerqwerqwer" << endl;
     
     //Misc.
     glClear(GL_COLOR_BUFFER_BIT);
     glLoadIdentity();
     
-    for(Polygon *polygon : all_polygons){
-        polygon->drawPolygon();
+    clearAllPixels();
+    
+    for(auto i : all_polygons){
+        i->drawOutlines();
     }
     
-    for(Line *line : all_lines ){
-//        for(int i = 0; i < line->vertices.size(); i++){
-//            cout << line->vertices.at(i) << " " << endl;
-//        }
-//        cout << endl;
-        cout << line->n << endl;
+    
+    /*********************
+        Clipping lines
+    **********************
+    Line *line = new Line(70, 80, 85, 80);
+    all_lines.push_back(line);
+    
+    
+    vector<int>index;
+    for(auto i : all_lines){
+        int j = i->clipLine();
+        if (j <= 0){
+            int pos = getPosByID(all_lines, i);
+            if(pos >= 0){
+                cout << "index = " << pos << endl;
+                index.push_back(pos);
+            }
+        }
     }
     
+    for (auto i : index){
+        all_lines[i] = all_lines.back();
+        all_lines.pop_back();
+    }
+
+    
+    for(auto i : all_lines){
+        i->lineDDA();
+    }
+     */
+
+    
+
     
     //draws pixel on screen, width and height must match pixel buffer dimension
     glDrawPixels(window_width, window_height, GL_RGB, GL_FLOAT, PixelBuffer);
@@ -491,7 +558,7 @@ int main(int argc, char *argv[]){
     std::cout << "numPolygons: " << numPolygons << std::endl;
     
     // container to hold coordinates
-    std::vector<std::array<double, 2>>points;
+    std::vector<std::array<float, 2>>points;
     
     getline(inputFile, chars);
     
@@ -503,12 +570,12 @@ int main(int argc, char *argv[]){
             iss.str(chars);
             std::string val1, val2;
             iss >> val1 >> val2;
-            double x = std::stod(val1);
-            double y = std::stod(val2);
+            double x = std::stof(val1);
+            double y = std::stof(val2);
             std::cout << "val1 = " << val1 << std::endl;
             std::cout << "val2 = " << val2 << std::endl;
             std::cout << std::endl;
-            std::array<double, 2>coordinates = {x, y};
+            std::array<float, 2>coordinates = {static_cast<float>(x), static_cast<float>(y)};
             points.push_back(coordinates);
             getline(inputFile, chars);
         }
@@ -542,10 +609,10 @@ int main(int argc, char *argv[]){
     glutInitWindowPosition(100, 100);
     
     //create and set main window title
-    int MainWindow = glutCreateWindow("Hello Graphics!!");
+    glutCreateWindow("Hello Graphics!!");
     glClearColor(0, 0, 0, 0); //clears the buffer of OpenGL
     //sets display function
-    glutDisplayFunc(display);
+    glutDisplayFunc(update);
     
     glutMainLoop(); //main display loop, will display until terminate
     return 0;
