@@ -30,7 +30,7 @@ int window_width = 200;
 int window_height = 200;
 int PixelBufferSize = window_width * window_height * 3;
 float *PixelBuffer;
-float xmin = 65, xmax = 90, ymin = 50, ymax = 100;
+float xmin = 125, xmax = 175, ymin =90, ymax = 125;
 enum{TOP=0x1,BOTTOM=0x2,RIGHT=0x4,LEFT=0x8};
 
 
@@ -56,10 +56,23 @@ bool xCompare (Bucket* edge1, Bucket* edge2) {
     }
 }
 
+unsigned int code(float x,float y){
+    unsigned int code=0;
+    if(y>ymax)
+        code|=TOP;
+    if(y<ymin)
+        code|=BOTTOM;
+    if(x>xmax)
+        code|=RIGHT;
+    if(x<xmin)
+        code|=LEFT;
+    return code;
+}
+
 class Geometry {
-    public:
-        std::vector<std::array<float, 2>> vertices;
-        int n, id;
+public:
+    std::vector<Point *> vertices;
+    int n, id;
     
 };
 
@@ -70,18 +83,22 @@ int getPosByID(std::vector<Geometry *> vect, Geometry *obj);
 class Line : public Geometry {
 public:
     /* data members */
-    std::vector<std::array<float, 2>> vertices;
     float x1, y1, x2, y2;
     int color = 1.0;
     
     
     /* member functions */
     Line(std::vector<std::array<float, 2>> points){
-        vertices = points;
-        x1 = vertices.at(0)[0];
-        y1 = vertices.at(0)[1];
-        x2 = vertices.at(1)[0];
-        y2 = vertices.at(1)[1];
+        for(auto it = points.begin(); it != points.end(); it++){
+            Point *pt = new Point();
+            pt->x = (*it)[0];
+            pt->y = (*it)[1];
+            vertices.push_back(pt);
+        }
+        x1 = points.at(0)[0];
+        y1 = points.at(0)[1];
+        x2 = points.at(1)[0];
+        y2 = points.at(1)[1];
         id = ::pid++;
         n = (int)vertices.size();
     }
@@ -181,18 +198,6 @@ public:
         }
     }
     
-    unsigned int code(float x,float y){
-        unsigned int code=0;
-        if(y>ymax)
-            code|=TOP;
-        if(y<ymin)
-            code|=BOTTOM;
-        if(x>xmax)
-            code|=RIGHT;
-        if(x<xmin)
-            code|=LEFT;
-        return code;
-    }
     
     int clipLine(){
         unsigned int outcode0,outcode1;
@@ -206,7 +211,7 @@ public:
         
         outcode0 = code(_x1,_y1);
         outcode1 = code(_x2,_y2);
-
+        
         do
         {
             if(outcode0 == 0 && outcode1==0)
@@ -264,88 +269,92 @@ public:
             y1 = _y1;
             x2 = _x2;
             y2 = _y2;
-            lineBres();
-            cout << "clipLine returned 1" << endl;
             return 1;
         }
-        cout << "clipLine returned -1" << endl;
         return -1;
     }
     
 };
 
 class Polygon : public Geometry {
-    public:
-        /* data members */
-        std::vector<int> xc;
-        std::vector<int> yc;
+public:
+    /* data members */
+    std::vector<int> xc;
+    std::vector<int> yc;
+    std::vector<Point *>results;
+    std::vector<Point *>tmp;
+    bool unchanged = false;
     
-        /* member functions */
-        // constructor
-        Polygon(std::vector<std::array<float, 2>> points){
-            vertices = points;
-            for(auto it = vertices.begin(); it != vertices.end(); it++){
-                xc.push_back((*it)[0]);
-                yc.push_back((*it)[1]);
-            }
-            n = (int)vertices.size();
-            id = ::pid++;
+    /* member functions */
+    // constructor
+    Polygon(std::vector<std::array<float, 2>> points){
+        for(auto it = points.begin(); it != points.end(); it++){
+            Point *pt = new Point();
+            pt->x = (*it)[0];
+            pt->y = (*it)[1];
+            vertices.push_back(pt);
+            xc.push_back((*it)[0]);
+            yc.push_back((*it)[1]);
             
         }
+        n = (int)vertices.size();
+        id = ::pid++;
+        
+    }
     
-        // creates edge buckets from the given edges
-        std::list<Bucket*> createEdges () {
-            int startIndex = n - 1;
-            int yMax;
-            int yMin;
-            int initialX;
-            int sign;
-            int dX;
-            int dY;
-            Point v1;
-            Point v2;
-            Point tmp;
-
-            std::list<Bucket*> edgeTable;   // list that contains all of the edges that make up the figure
+    // creates edge buckets from the given edges
+    std::list<Bucket*> createEdges () {
+        int startIndex = n - 1;
+        int yMax;
+        int yMin;
+        int initialX;
+        int sign;
+        int dX;
+        int dY;
+        Point v1;
+        Point v2;
+        Point tmp;
+        
+        std::list<Bucket*> edgeTable;   // list that contains all of the edges that make up the figure
+        
+        // Create the edge buckets and place in tempEdgeTable
+        for (int i = 0; i < n; i++) {
+            v1 = { xc[startIndex], yc[startIndex] };
+            v2 = { xc[i], yc[i] };
             
-            // Create the edge buckets and place in tempEdgeTable
-            for (int i = 0; i < n; i++) {
-                v1 = { xc[startIndex], yc[startIndex] };
-                v2 = { xc[i], yc[i] };
-                
-                // Check and swap vertices if not in left to right order
-                if (v2.x < v1.x) {
-                    tmp = v1;
-                    v1 = v2;
-                    v2 = tmp;
-                }
-                yMax = (v1.y > v2.y) ? v1.y : v2.y;
-                yMin = (v1.y < v2.y) ? v1.y : v2.y;
-                initialX = (v1.y < v2.y) ? v1.x : v2.x;
-                sign = ((v2.y - v1.y) < 0) ? -1 : 1;
-                dX = abs(v2.x - v1.x);
-                dY = abs(v2.y - v1.y);
-                
-                if (dY != 0) {
-                    Bucket *freshBucket = new Bucket;
-                    
-                    *freshBucket = {
-                        yMax,
-                        yMin,
-                        initialX,
-                        sign,
-                        dX,
-                        dY,
-                        0
-                    };
-                    
-                    
-                    edgeTable.push_back(freshBucket);
-                }
-                startIndex = i;
+            // Check and swap vertices if not in left to right order
+            if (v2.x < v1.x) {
+                tmp = v1;
+                v1 = v2;
+                v2 = tmp;
             }
-            return edgeTable;
+            yMax = (v1.y > v2.y) ? v1.y : v2.y;
+            yMin = (v1.y < v2.y) ? v1.y : v2.y;
+            initialX = (v1.y < v2.y) ? v1.x : v2.x;
+            sign = ((v2.y - v1.y) < 0) ? -1 : 1;
+            dX = abs(v2.x - v1.x);
+            dY = abs(v2.y - v1.y);
+            
+            if (dY != 0) {
+                Bucket *freshBucket = new Bucket;
+                
+                *freshBucket = {
+                    yMax,
+                    yMin,
+                    initialX,
+                    sign,
+                    dX,
+                    dY,
+                    0
+                };
+                
+                
+                edgeTable.push_back(freshBucket);
+            }
+            startIndex = i;
         }
+        return edgeTable;
+    }
     
     // Given the edge table of the polygon, fill the polygons
     void processEdgeTable (std::list<Bucket*> edgeTable) {
@@ -427,37 +436,285 @@ class Polygon : public Geometry {
     // Draw outline of polygon
     void drawOutlines(){
         for(int i = 0; i < vertices.size()-1; i++){
-            float x1 = vertices[i][0];
-            float y1 = vertices[i][1];
-            float x2 = vertices[i+1][0];
-            float y2 = vertices[i+1][1];
+            float x1 = vertices[i]->x;
+            float y1 = vertices[i]->y;
+            float x2 = vertices[i+1]->x;
+            float y2 = vertices[i+1]->y;
             Line line(x1, y1, x2, y2);
             line.lineDDA();
             
         }
         
         // connect starting vertice to ending vertice
-        float x1 = vertices[0][0];
-        float y1 = vertices[0][1];
-        float x2 = vertices[vertices.size()-1][0];
-        float y2 = vertices[vertices.size()-1][1];
+        float x1 = vertices[0]->x;
+        float y1 = vertices[0]->y;
+        float x2 = vertices[vertices.size()-1]->x;
+        float y2 = vertices[vertices.size()-1]->y;
         Line line(x1, y1, x2, y2);
         line.lineDDA();
     }
+    
+    struct PointCompare {
+        bool operator()(Point *a, Point *b)
+        {
+            if (a->x == b->x){
+                return a->y < b->y;
+            }
+            
+            return a->x < b->x;
+        }
+    };
+    
+    
+    
+    void clipLeft(Point *p1, Point *p2){
+        float dy = p2->y - p1->y;
+        float dx = p2->x - p1->x;
+        float m;
+        if(fabs(dx) > 0)
+            m = dy/dx;
+        else
+            m = 100000;
+        Point *intr = new Point();
+        intr->x = xmin;
+        intr->y = round(m * (xmin - p1->x) + p1->y);
+        
+        // in to in
+        if(p1->x >= xmin && p2->x >= xmin){
+            tmp.push_back(p2);
+        }
+        
+        // out to in
+        else if(p1->x < xmin && p2->x >= xmin){
+            tmp.push_back(intr);
+            tmp.push_back(p2);
+        }
+        
+        // in to out
+        else if(p1->x >= xmin && p2->x < xmin){
+            tmp.push_back(intr);
+        }
+        
+        // out to out
+        // nothing was changed
+        
+    }
+    
+    void clipTop(Point *p1, Point *p2){
+        float dy = p2->y - p1->y;
+        float dx = p2->x - p1->x;
+        float m;
+        if(fabs(dx) > 0)
+            m = dy/dx;
+        else
+            m = 100000;
+        Point *intr = new Point();
+        intr->y = ymax;
+        intr->x = round((1/m) * (ymax - p1->y) + p1->x);
+        
+        
+        // in to in
+        if(p1->y <= ymax && p2->y <= ymax){
+            tmp.push_back(p2);
+        }
+        
+        // out to in
+        else if(p1->y > ymax && p2->y <= ymax){
+            tmp.push_back(intr);
+            tmp.push_back(p2);
+        }
+        
+        // in to out
+        else if(p1->y <= ymax && p2->y > ymax){
+            tmp.push_back(intr);
+        }
+        
+        // out to out
+        // nothing was changed
+    }
+    
+    void clipRight(Point *p1, Point *p2){
+        float dy = p2->y - p1->y;
+        float dx = p2->x - p1->x;
+        float m;
+        if(fabs(dx) > 0)
+            m = dy/dx;
+        else
+            m = 100000;
+        Point *intr = new Point();
+        intr->x = xmax;
+        intr->y = round(m * (ymax - p1->y) + p1->x);
+        
+        // in to in
+        if(p1->x <= xmax && p2->x <= xmax){
+            tmp.push_back(p2);
+        }
+        
+        // out to in
+        else if(p1->x > xmax && p2->x <= xmax){
+            tmp.push_back(intr);
+            tmp.push_back(p2);
+        }
+        
+        // in to out
+        else if(p1->x <= xmax && p2->x > xmax){
+            tmp.push_back(intr);
+        }
+        
+        // out to out
+        // nothing was changed
 
 
+        
+    }
+    
+    void clipBottom(Point *p1, Point *p2){
+        float dy = p2->y - p1->y;
+        float dx = p2->x - p1->x;
+        float m;
+        if(fabs(dx) > 0)
+            m = dy/dx;
+        else
+            m = 100000;
+        Point *intr = new Point();
+        intr->y = ymin;
+        intr->x = round((1/m) * (ymin - p1->y) + p1->x);
+        
+        // in to in
+        if(p1->y >= ymin && p2->y >= ymin){
+            tmp.push_back(p2);
+        }
+        
+        // out to in
+        else if(p1->y < ymin && p2->y >= ymin){
+            tmp.push_back(intr);
+            tmp.push_back(p2);
+        }
+        
+        // in to out
+        else if(p1->y >= ymin && p2->y < ymin){
+            tmp.push_back(intr);
+        }
+        
+        // out to out
+        // do nothing
+        
+    }
+    
+    int clipPolygon(){
+        results.clear();
+        tmp.clear();
+        unchanged = false;
+        
+        Point *p1;
+        Point *p2;
+        
+        results = vertices;
+        
+        // clip with respect to Left edge
+        for(int i = 0; i < results.size() - 1; i++){
+            p1 = results[i];
+            p2 = results[i+1];
+            clipLeft(p1, p2);
+        }
+        p1 = results[vertices.size() - 1];
+        p2 = results[0];
+        clipLeft(p1, p2);
+        
+        
+        if (!tmp.empty()){
+            results = tmp;
+            tmp.clear();
+        }
+        else {
+            return -1;
+        }
+        
+        // clip with respect to Top edge
+        for(int i = 0; i < results.size() - 1; i++){
+            p1 = results[i];
+            p2 = results[i+1];
+            clipTop(p1, p2);
+        }
+        p1 = results[vertices.size() - 1];
+        p2 = results[0];
+        clipTop(p1, p2);
+        
+        
+        if (!tmp.empty()){
+            results = tmp;
+            tmp.clear();
+        }
+        else {
+            return -1;
+        }
+        
+        // clip with respect to Right edge
+        for(int i = 0; i < results.size() - 1; i++){
+            p1 = results[i];
+            p2 = results[i+1];
+            clipRight(p1, p2);
+        }
+        p1 = results[vertices.size() - 1];
+        p2 = results[0];
+        clipRight(p1, p2);
+        
+        
+        
+        if (!tmp.empty()){
+            results = tmp;
+            tmp.clear();
+        }
+        else {
+            return -1;
+        }
+        
+        // clip with respect to Bottom edge
+        for(int i = 0; i < results.size() - 1; i++){
+            p1 = results[i];
+            p2 = results[i+1];
+            clipBottom(p1, p2);
+        }
+        p1 = results[vertices.size() - 1];
+        p2 = results[0];
+        clipBottom(p1, p2);
+        
+        if(!tmp.empty()){
+            results = tmp;
+        }
+        else {
+            return -1;
+        }
+        
+        
+        if(!results.empty()){
+            vertices.clear();
+            xc.clear();
+            yc.clear();
+            vertices = results;
+            for(auto it = vertices.begin(); it != vertices.end(); it++){
+                xc.push_back((*it)->x);
+                yc.push_back((*it)->y);
+            }
+            n = vertices.size();
+            return 1;
+        }
+        return -1;
+    }
+    
+    
 }; // end class definition
 
 std::vector<Polygon *> all_polygons; // global variable to hold all polygons
 std::vector<Line *> all_lines; // global variable to hold all polygons
 
-int getPosByID(std::vector<Line *> vect, Line *obj){
+template <typename T>
+int getPosByID(std::vector<T> vect, T obj){
     for(int i = 0; i < vect.size(); i++){
         if (vect[i]->id == obj->id){
             return i;
         }
     }
-    
     return -1;
 }
 
@@ -487,7 +744,7 @@ void clearAllPixels(){
 // main display loop, this function will be called again and again by OpenGL
 void update(){
     
-    cout << "eqwerqwerqwer" << endl;
+    cout << "entered update" << endl;
     
     //Misc.
     glClear(GL_COLOR_BUFFER_BIT);
@@ -495,22 +752,43 @@ void update(){
     
     clearAllPixels();
     
+    
+    /********************
+     * polygon clipping
+     ********************/
+
+    vector<int>polygons_index;
     for(auto i : all_polygons){
-        i->drawOutlines();
+        int exists = i->clipPolygon();
+        if (exists <= 0){
+            int pos = getPosByID(all_polygons, i);
+            if (pos >= 0){
+                polygons_index.push_back(pos);
+            }
+        }
+    }
+
+    for (auto i : polygons_index){
+        all_polygons[i] = all_polygons.back();
+        all_polygons.pop_back();
+    }
+
+    for(auto i : all_polygons){
+        i->drawPolygon();
     }
     
     
     /*********************
         Clipping lines
-    **********************
+     **********************/
     Line *line = new Line(70, 80, 85, 80);
     all_lines.push_back(line);
     
     
     vector<int>index;
     for(auto i : all_lines){
-        int j = i->clipLine();
-        if (j <= 0){
+        int exists = i->clipLine();
+        if (exists <= 0){
             int pos = getPosByID(all_lines, i);
             if(pos >= 0){
                 cout << "index = " << pos << endl;
@@ -523,15 +801,12 @@ void update(){
         all_lines[i] = all_lines.back();
         all_lines.pop_back();
     }
-
+    
     
     for(auto i : all_lines){
-        i->lineDDA();
+        i->lineBres();
     }
-     */
-
     
-
     
     //draws pixel on screen, width and height must match pixel buffer dimension
     glDrawPixels(window_width, window_height, GL_RGB, GL_FLOAT, PixelBuffer);
