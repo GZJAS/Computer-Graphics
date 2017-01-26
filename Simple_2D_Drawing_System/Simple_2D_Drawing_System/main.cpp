@@ -30,7 +30,7 @@ int window_width = 200;
 int window_height = 200;
 int PixelBufferSize = window_width * window_height * 3;
 float *PixelBuffer;
-float xmin = 125, xmax = 175, ymin =90, ymax = 125;
+float xmin = 65, xmax = 90, ymin = 50, ymax = 100;
 enum{TOP=0x1,BOTTOM=0x2,RIGHT=0x4,LEFT=0x8};
 
 
@@ -72,7 +72,206 @@ unsigned int code(float x,float y){
 class Geometry {
 public:
     std::vector<Point *> vertices;
+    std::vector<int> xc;
+    std::vector<int> yc;
+    std::vector<std::vector<int>> matrix;
+    
+    Point centroid;
+    
     int n, id;
+    
+    // convert vertices vector into matrix (vector of vectors)
+    void convertToMatrix(){
+        vector<int>x_row;
+        vector<int>y_row;
+        for(auto vertex : vertices){
+            x_row.push_back(vertex->x);
+            y_row.push_back(vertex->y);
+        }
+        
+        vector<int>bottom_row;
+        for(int i = 0; i < n; i++){
+            bottom_row.push_back(1);
+        }
+        
+        matrix.push_back(x_row);
+        matrix.push_back(y_row);
+        matrix.push_back(bottom_row);
+    }
+    
+    void convertToVector(){
+        int numPoints = matrix[0].size();
+        vertices.clear();
+        for(int i = 0; i < numPoints; i++){
+            Point *pt = new Point();
+            pt->x = matrix[0][i];
+            pt->y = matrix[1][i];
+            vertices.push_back(pt);
+        }
+    }
+    
+    void printMatrix(std::vector<std::vector<int>> someMatrix){
+        cout << "row size = " << someMatrix.size() << endl;
+        cout << "col size = " << someMatrix[0].size() << endl;
+        for(int i = 0; i < someMatrix.size(); i++){
+
+            for(int j = 0; j < someMatrix[i].size(); j++){
+                
+                cout << someMatrix[i][j] << " ";
+            }
+            cout << endl;
+        }
+        cout << endl;
+    }
+    
+    void printVertices(){
+        for(auto i: vertices){
+            cout << i->x << " " << i->y << endl;
+        }
+        cout << endl;
+    }
+    
+    // find centroid of polygon
+    // http://stackoverflow.com/questions/2792443/finding-the-centroid-of-a-polygon
+    void findCentroid()
+    {
+        centroid = {0, 0};
+        double signedArea = 0.0;
+        double x0 = 0.0; // Current vertex X
+        double y0 = 0.0; // Current vertex Y
+        double x1 = 0.0; // Next vertex X
+        double y1 = 0.0; // Next vertex Y
+        double a = 0.0;  // Partial signed area
+        
+        // For all vertices
+        for (int i = 0; i < vertices.size(); ++i)
+        {
+            x0 = vertices[i]->x;
+            y0 = vertices[i]->y;
+            x1 = vertices[(i+1) % n]->x;
+            y1 = vertices[(i+1) % n]->y;
+            a = x0*y1 - x1*y0;
+            signedArea += a;
+            centroid.x += (x0 + x1)*a;
+            centroid.y += (y0 + y1)*a;
+        }
+        
+        signedArea *= 0.5;
+        centroid.x /= (6.0*signedArea);
+        centroid.y /= (6.0*signedArea);
+        
+    }
+    
+    // multiply two matrices together
+    std::vector<std::vector<int>> matrixMultiply(std::vector<std::vector<int>> matrixA, std::vector<std::vector<int>> matrixB){
+        
+        std::vector<std::vector<int>> matrixC;
+        int r1 = (int)matrixA.size();       // 3
+        int c1 = (int)matrixA[0].size();
+        int c2 = n;
+        
+        std::vector<int>row;
+        for(int i = 0; i < n; i++){
+            row.push_back(0);
+        }
+        for(int i = 0; i < matrixA.size(); i++){
+            matrixC.push_back(row);
+        }
+        
+
+        for(int i = 0; i < r1; i++){
+            for (int j = 0; j < c2; j++){
+                for(int k = 0; k < c1; k++){
+                    matrixC.at(i).at(j) += matrixA.at(i).at(k) * matrixB.at(k).at(j);
+                }
+            }
+        }
+        
+        return matrixC;
+    }
+    
+    
+    // return a matrix with given rotate parameters
+    std::vector<std::vector<int>> create_rot_matrix(int alpha){
+        // rot matrix in the form of:
+        //        |   cost(alpha)   -sin(alpha)     0   |
+        //        |   sin(alpha)    cos(alpha)beta  0   |
+        //        |   0                 0           1   |
+        std::vector<std::vector<int>> rot_matrix;
+        vector<int>row = {static_cast<int>(cos(alpha)), static_cast<int>(-sin(alpha)), 0};
+        rot_matrix.push_back(row);
+        
+        row = {static_cast<int>(sin(alpha)), static_cast<int>(cos(alpha)), 0};
+        rot_matrix.push_back(row);
+        
+        row = {0, 0, 1};
+        rot_matrix.push_back(row);
+        
+        return rot_matrix;
+        
+    }
+    
+    // return a matrix with given scaling parameters
+    std::vector<std::vector<int>> create_scale_matrix(int alpha, int beta){
+        // scale matrix in the form of:
+        //        |    alpha   0       0   |
+        //        |    0       beta    0   |
+        //        |    0       0       1   |
+        std::vector<std::vector<int>> scale_matrix;
+        vector<int>row = {alpha, 0, 0};
+        scale_matrix.push_back(row);
+        
+        row = {0, beta, 0};
+        scale_matrix.push_back(row);
+        
+        row = {0, 0, 1};
+        scale_matrix.push_back(row);
+        
+        return scale_matrix;
+        
+    }
+    
+    // return a matrix with given tranlate parameters
+    std::vector<std::vector<int>> create_trans_matrix(int x, int y){
+        // translate matrix in the form of:
+        //        |     1     0      x    |
+        //        |     0     1      y    |
+        //        |     0     0      1    |
+        std::vector<std::vector<int>> trans_matrix;
+        vector<int>row = {1, 0, x};
+        trans_matrix.push_back(row);
+        
+        row = {0, 1, y};
+        trans_matrix.push_back(row);
+        
+        row = {0, 0, 1};
+        trans_matrix.push_back(row);
+        
+        return trans_matrix;
+        
+    }
+    
+    void translate(int x, int y){
+        
+        std::vector<std::vector<int>> trans_matrix;
+        std::vector<std::vector<int>> cpymatrix;
+        std::vector<std::vector<int>> result_matrix;
+        trans_matrix = create_trans_matrix(x, y);
+        
+        
+        
+        // copy matrix
+        cpymatrix = matrix;
+
+        //multiply original matrix by translation matrix
+        result_matrix = matrixMultiply(trans_matrix, cpymatrix);
+        
+        // copy back into vector
+        matrix = result_matrix;
+        
+        
+    }
+    
     
 };
 
@@ -110,6 +309,14 @@ public:
         this->y2 = y2;
     }
     
+    
+    void updateParameters(){
+        this->x1 = vertices[0]->x;
+        this->y1 = vertices[0]->y;
+        this->x2 = vertices[1]->x;
+        this->y2 = vertices[1]->y;
+        n = (int)vertices.size();
+    }
     
     // draws a single line given a vertex pair and color according to DDA algorithm
     void lineDDA()
@@ -279,8 +486,7 @@ public:
 class Polygon : public Geometry {
 public:
     /* data members */
-    std::vector<int> xc;
-    std::vector<int> yc;
+
     std::vector<Point *>results;
     std::vector<Point *>tmp;
     bool unchanged = false;
@@ -300,6 +506,16 @@ public:
         n = (int)vertices.size();
         id = ::pid++;
         
+    }
+    
+    void updateParameters(){
+        xc.clear();
+        yc.clear();
+        for(auto it = vertices.begin(); it != vertices.end(); it++){
+            xc.push_back((*it)->x);
+            yc.push_back((*it)->y);
+        }
+        n = (int)vertices.size();
     }
     
     // creates edge buckets from the given edges
@@ -689,14 +905,8 @@ public:
         
         if(!results.empty()){
             vertices.clear();
-            xc.clear();
-            yc.clear();
             vertices = results;
-            for(auto it = vertices.begin(); it != vertices.end(); it++){
-                xc.push_back((*it)->x);
-                yc.push_back((*it)->y);
-            }
-            n = vertices.size();
+            updateParameters();
             return 1;
         }
         return -1;
@@ -753,59 +963,88 @@ void update(){
     clearAllPixels();
     
     
-    /********************
-     * polygon clipping
-     ********************/
+//    /********************
+//     * polygon clipping
+//     ********************/
+//    vector<int>polygons_index;
+//    for(auto i : all_polygons){
+//        int exists = i->clipPolygon();
+//        if (exists <= 0){
+//            int pos = getPosByID(all_polygons, i);
+//            if (pos >= 0){
+//                polygons_index.push_back(pos);
+//            }
+//        }
+//    }
+//
+//    for (auto i : polygons_index){
+//        all_polygons[i] = all_polygons.back();
+//        all_polygons.pop_back();
+//    }
+//
+//    for(auto i : all_polygons){
+//        i->drawPolygon();
+//    }
+    
 
-    vector<int>polygons_index;
-    for(auto i : all_polygons){
-        int exists = i->clipPolygon();
-        if (exists <= 0){
-            int pos = getPosByID(all_polygons, i);
-            if (pos >= 0){
-                polygons_index.push_back(pos);
-            }
-        }
-    }
-
-    for (auto i : polygons_index){
-        all_polygons[i] = all_polygons.back();
-        all_polygons.pop_back();
-    }
-
-    for(auto i : all_polygons){
-        i->drawPolygon();
-    }
+//    
+//    /*********************
+//        Clipping lines
+//     **********************/
+//    Line *line = new Line(70, 80, 85, 80);
+//    all_lines.push_back(line);
+//    
+//    
+//    vector<int>index;
+//    for(auto i : all_lines){
+//        int exists = i->clipLine();
+//        if (exists <= 0){
+//            int pos = getPosByID(all_lines, i);
+//            if(pos >= 0){
+//                cout << "index = " << pos << endl;
+//                index.push_back(pos);
+//            }
+//        }
+//    }
+//    
+//    for (auto i : index){
+//        all_lines[i] = all_lines.back();
+//        all_lines.pop_back();
+//    }
+//    
+//    
+//    for(auto i : all_lines){
+//        i->lineBres();
+//    }
     
+//    all_polygons[0]->drawPolygon();
+//    all_polygons[0]->convertToMatrix();
+//    all_polygons[0]->translate(100, 0);
+//    all_polygons[0]->convertToVector();
+//    all_polygons[0]->updateParameters();
+//    all_polygons[0]->drawPolygon();
     
-    /*********************
-        Clipping lines
-     **********************/
-    Line *line = new Line(70, 80, 85, 80);
-    all_lines.push_back(line);
+    all_lines[0]->lineDDA();
+    all_lines[0]->convertToMatrix();
+    all_lines[0]->translate(7, 20);
+    all_lines[0]->convertToVector();
+    all_lines[0]->updateParameters();
+    all_lines[0]->lineDDA();
     
+//    all_polygons[0]->matrixmultipleexample();
+//
+//    
+//    all_polygons[0]->printMatrix(all_polygons[0]->matrix1);
+//    all_polygons[0]->printMatrix(all_polygons[0]->matrix2);
+//    all_polygons[0]->matrixmultipleexample();
+//    
+//    for(auto i : all_polygons){
+//        i->drawPolygon();
+//        i->findCentroid();
+//        cout << "centroid x = " << i->centroid.x << endl;
+//        cout << "centroid y = " << i->centroid.y << endl;
+//    }
     
-    vector<int>index;
-    for(auto i : all_lines){
-        int exists = i->clipLine();
-        if (exists <= 0){
-            int pos = getPosByID(all_lines, i);
-            if(pos >= 0){
-                cout << "index = " << pos << endl;
-                index.push_back(pos);
-            }
-        }
-    }
-    
-    for (auto i : index){
-        all_lines[i] = all_lines.back();
-        all_lines.pop_back();
-    }
-    
-    
-    for(auto i : all_lines){
-        i->lineBres();
-    }
     
     
     //draws pixel on screen, width and height must match pixel buffer dimension
@@ -813,6 +1052,7 @@ void update(){
     
     //window refresh
     glFlush();
+    
 }
 
 
