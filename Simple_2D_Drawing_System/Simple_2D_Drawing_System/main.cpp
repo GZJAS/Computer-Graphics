@@ -22,6 +22,8 @@
 #include <array>
 #include <list>
 
+#define PI 3.14159265359
+
 using namespace std;
 
 static int pid = 0;
@@ -74,7 +76,7 @@ public:
     std::vector<Point *> vertices;
     std::vector<int> xc;
     std::vector<int> yc;
-    std::vector<std::vector<int>> matrix;
+    std::vector<std::vector<double>> matrix;
     
     Point centroid;
     
@@ -82,14 +84,14 @@ public:
     
     // convert vertices vector into matrix (vector of vectors)
     void convertToMatrix(){
-        vector<int>x_row;
-        vector<int>y_row;
+        vector<double>x_row;
+        vector<double>y_row;
         for(auto vertex : vertices){
-            x_row.push_back(vertex->x);
-            y_row.push_back(vertex->y);
+            x_row.push_back(static_cast<double>(vertex->x));
+            y_row.push_back(static_cast<double>(vertex->y));
         }
         
-        vector<int>bottom_row;
+        vector<double>bottom_row;
         for(int i = 0; i < n; i++){
             bottom_row.push_back(1);
         }
@@ -100,7 +102,7 @@ public:
     }
     
     void convertToVector(){
-        int numPoints = matrix[0].size();
+        int numPoints = (int)matrix[0].size();
         vertices.clear();
         for(int i = 0; i < numPoints; i++){
             Point *pt = new Point();
@@ -136,12 +138,12 @@ public:
     void findCentroid()
     {
         centroid = {0, 0};
-        double signedArea = 0.0;
-        double x0 = 0.0; // Current vertex X
-        double y0 = 0.0; // Current vertex Y
-        double x1 = 0.0; // Next vertex X
-        double y1 = 0.0; // Next vertex Y
-        double a = 0.0;  // Partial signed area
+        float signedArea = 0.0;
+        float x0 = 0.0; // Current vertex X
+        float y0 = 0.0; // Current vertex Y
+        float x1 = 0.0; // Next vertex X
+        float y1 = 0.0; // Next vertex Y
+        float a = 0.0;  // Partial signed area
         
         // For all vertices
         for (int i = 0; i < vertices.size(); ++i)
@@ -163,14 +165,14 @@ public:
     }
     
     // multiply two matrices together
-    std::vector<std::vector<int>> matrixMultiply(std::vector<std::vector<int>> matrixA, std::vector<std::vector<int>> matrixB){
+    std::vector<std::vector<double>> matrixMultiply(std::vector<std::vector<double>> matrixA, std::vector<std::vector<double>> matrixB){
         
-        std::vector<std::vector<int>> matrixC;
+        std::vector<std::vector<double>> matrixC;
         int r1 = (int)matrixA.size();       // 3
         int c1 = (int)matrixA[0].size();
         int c2 = n;
         
-        std::vector<int>row;
+        std::vector<double>row;
         for(int i = 0; i < n; i++){
             row.push_back(0);
         }
@@ -192,19 +194,19 @@ public:
     
     
     // return a matrix with given rotate parameters
-    std::vector<std::vector<int>> create_rot_matrix(int alpha){
+    std::vector<std::vector<double>> create_rot_matrix(double alpha){
         // rot matrix in the form of:
         //        |   cost(alpha)   -sin(alpha)     0   |
         //        |   sin(alpha)    cos(alpha)beta  0   |
         //        |   0                 0           1   |
-        std::vector<std::vector<int>> rot_matrix;
-        vector<int>row = {static_cast<int>(cos(alpha)), static_cast<int>(-sin(alpha)), 0};
+        std::vector<std::vector<double>> rot_matrix;
+        vector<double>row = {cos(alpha * PI/180), -sin(alpha * PI/180), 0.0};
         rot_matrix.push_back(row);
         
-        row = {static_cast<int>(sin(alpha)), static_cast<int>(cos(alpha)), 0};
+        row = {sin(alpha * PI/180), cos(alpha * PI/180), 0.0};
         rot_matrix.push_back(row);
         
-        row = {0, 0, 1};
+        row = {0.0, 0.0, 1.0};
         rot_matrix.push_back(row);
         
         return rot_matrix;
@@ -212,19 +214,19 @@ public:
     }
     
     // return a matrix with given scaling parameters
-    std::vector<std::vector<int>> create_scale_matrix(int alpha, int beta){
+    std::vector<std::vector<double>> create_scale_matrix(double alpha, double beta){
         // scale matrix in the form of:
         //        |    alpha   0       0   |
         //        |    0       beta    0   |
         //        |    0       0       1   |
-        std::vector<std::vector<int>> scale_matrix;
-        vector<int>row = {alpha, 0, 0};
+        std::vector<std::vector<double>> scale_matrix;
+        vector<double>row = {alpha, 0.0, 0.0};
         scale_matrix.push_back(row);
         
-        row = {0, beta, 0};
+        row = {0.0, beta, 0.0};
         scale_matrix.push_back(row);
         
-        row = {0, 0, 1};
+        row = {0.0, 0.0, 1.0};
         scale_matrix.push_back(row);
         
         return scale_matrix;
@@ -232,33 +234,35 @@ public:
     }
     
     // return a matrix with given tranlate parameters
-    std::vector<std::vector<int>> create_trans_matrix(int x, int y){
+    std::vector<std::vector<double>> create_trans_matrix(double x, double y){
         // translate matrix in the form of:
         //        |     1     0      x    |
         //        |     0     1      y    |
         //        |     0     0      1    |
-        std::vector<std::vector<int>> trans_matrix;
-        vector<int>row = {1, 0, x};
+        std::vector<std::vector<double>> trans_matrix;
+        vector<double>row = {1.0, 0.0, x};
         trans_matrix.push_back(row);
         
-        row = {0, 1, y};
+        row = {0.0, 1.0, y};
         trans_matrix.push_back(row);
         
-        row = {0, 0, 1};
+        row = {0.0, 0.0, 1.0};
         trans_matrix.push_back(row);
         
         return trans_matrix;
         
     }
     
+    
+    // translate a polygon or line to (x, y)
     void translate(int x, int y){
         
-        std::vector<std::vector<int>> trans_matrix;
-        std::vector<std::vector<int>> cpymatrix;
-        std::vector<std::vector<int>> result_matrix;
+        std::vector<std::vector<double>> trans_matrix;
+        std::vector<std::vector<double>> cpymatrix;
+        std::vector<std::vector<double>> result_matrix;
+        
+        // get matrix for translating
         trans_matrix = create_trans_matrix(x, y);
-        
-        
         
         // copy matrix
         cpymatrix = matrix;
@@ -266,13 +270,78 @@ public:
         //multiply original matrix by translation matrix
         result_matrix = matrixMultiply(trans_matrix, cpymatrix);
         
-        // copy back into vector
+        // copy back into matrix
         matrix = result_matrix;
         
         
     }
     
+    // rotate polygon or line by alpha
+    void rotate(double alpha){
+        std::vector<std::vector<double>> rot_matrix;
+        std::vector<std::vector<double>> cpymatrix;
+        std::vector<std::vector<double>> trans_matrix;
+        std::vector<std::vector<double>> result_matrix;
+        std::vector<std::vector<double>> rev_trans_matrix;
+        
+        // find centroid and set coordinates
+        findCentroid();
+        
+        // matrix to translate polygon/line's centroid by (-cx, -cy)
+        rev_trans_matrix = create_trans_matrix(-centroid.x, -centroid.y);
+        
+        // get matrix for rotating polygon
+        rot_matrix = create_rot_matrix(alpha);
+        
+         // matrix to translate polygon/line's centroid back to (cx, cy)
+        trans_matrix = create_trans_matrix(centroid.x, centroid.y);
+
+        
+        // copy matrix
+        cpymatrix = matrix;
+        
+        // carry out operations for rotating: translate, rotate, and translate back
+        result_matrix = matrixMultiply(rev_trans_matrix, cpymatrix);
+        result_matrix = matrixMultiply(rot_matrix, result_matrix);
+        result_matrix = matrixMultiply(trans_matrix, result_matrix);
+        
+        // copy back into matrix
+        matrix = result_matrix;
+        
+    }
     
+    void scale(double alpha, double beta){
+        std::vector<std::vector<double>> scale_matrix;
+        std::vector<std::vector<double>> cpymatrix;
+        std::vector<std::vector<double>> trans_matrix;
+        std::vector<std::vector<double>> result_matrix;
+        std::vector<std::vector<double>> rev_trans_matrix;
+        
+        // find centroid and set coordinates
+        findCentroid();
+        
+        // matrix to translate polygon/line's centroid by (-cx, -cy)
+        rev_trans_matrix = create_trans_matrix(-centroid.x, -centroid.y);
+        
+        // get matrix for rotating polygon
+        scale_matrix = create_scale_matrix(alpha, beta);
+        
+        // matrix to translate polygon/line's centroid back to (cx, cy)
+        trans_matrix = create_trans_matrix(centroid.x, centroid.y);
+        
+        
+        // copy matrix
+        cpymatrix = matrix;
+        
+        // carry out operations for rotating: translate, rotate, and translate back
+        result_matrix = matrixMultiply(rev_trans_matrix, cpymatrix);
+        result_matrix = matrixMultiply(scale_matrix, result_matrix);
+        result_matrix = matrixMultiply(trans_matrix, result_matrix);
+        
+        // copy back into matrix
+        matrix = result_matrix;
+
+    }
 };
 
 
@@ -952,7 +1021,7 @@ void clearAllPixels(){
 
 
 // main display loop, this function will be called again and again by OpenGL
-void update(){
+void display(){
     
     cout << "entered update" << endl;
     
@@ -963,73 +1032,73 @@ void update(){
     clearAllPixels();
     
     
-//    /********************
-//     * polygon clipping
-//     ********************/
-//    vector<int>polygons_index;
-//    for(auto i : all_polygons){
-//        int exists = i->clipPolygon();
-//        if (exists <= 0){
-//            int pos = getPosByID(all_polygons, i);
-//            if (pos >= 0){
-//                polygons_index.push_back(pos);
-//            }
-//        }
-//    }
-//
-//    for (auto i : polygons_index){
-//        all_polygons[i] = all_polygons.back();
-//        all_polygons.pop_back();
-//    }
-//
-//    for(auto i : all_polygons){
-//        i->drawPolygon();
-//    }
+    /********************
+     * polygon clipping
+     ********************/
+    vector<int>polygons_index;
+    for(auto i : all_polygons){
+        int exists = i->clipPolygon();
+        if (exists <= 0){
+            int pos = getPosByID(all_polygons, i);
+            if (pos >= 0){
+                polygons_index.push_back(pos);
+            }
+        }
+    }
+
+    for (auto i : polygons_index){
+        all_polygons[i] = all_polygons.back();
+        all_polygons.pop_back();
+    }
+
+    for(auto i : all_polygons){
+        i->drawPolygon();
+    }
     
 
-//    
-//    /*********************
-//        Clipping lines
-//     **********************/
-//    Line *line = new Line(70, 80, 85, 80);
-//    all_lines.push_back(line);
-//    
-//    
-//    vector<int>index;
-//    for(auto i : all_lines){
-//        int exists = i->clipLine();
-//        if (exists <= 0){
-//            int pos = getPosByID(all_lines, i);
-//            if(pos >= 0){
-//                cout << "index = " << pos << endl;
-//                index.push_back(pos);
-//            }
-//        }
-//    }
-//    
-//    for (auto i : index){
-//        all_lines[i] = all_lines.back();
-//        all_lines.pop_back();
-//    }
-//    
-//    
-//    for(auto i : all_lines){
-//        i->lineBres();
-//    }
     
-//    all_polygons[0]->drawPolygon();
+    /*********************
+        Clipping lines
+     **********************/
+    Line *line = new Line(70, 80, 85, 80);
+    all_lines.push_back(line);
+    
+    
+    vector<int>index;
+    for(auto i : all_lines){
+        int exists = i->clipLine();
+        if (exists <= 0){
+            int pos = getPosByID(all_lines, i);
+            if(pos >= 0){
+                cout << "index = " << pos << endl;
+                index.push_back(pos);
+            }
+        }
+    }
+    
+    for (auto i : index){
+        all_lines[i] = all_lines.back();
+        all_lines.pop_back();
+    }
+
+    
+    for(auto i : all_lines){
+        i->lineBres();
+    }
+    
+//    all_polygons[0]->drawOutlines();
 //    all_polygons[0]->convertToMatrix();
-//    all_polygons[0]->translate(100, 0);
+//    all_polygons[0]->scale(2.0, 2.0);
 //    all_polygons[0]->convertToVector();
 //    all_polygons[0]->updateParameters();
-//    all_polygons[0]->drawPolygon();
+//    all_polygons[0]->drawOutlines();
     
-    all_lines[0]->lineDDA();
-    all_lines[0]->convertToMatrix();
-    all_lines[0]->translate(7, 20);
-    all_lines[0]->convertToVector();
-    all_lines[0]->updateParameters();
-    all_lines[0]->lineDDA();
+//    all_lines[0]->lineDDA();
+//    all_lines[0]->convertToMatrix();
+//    all_lines[0]->translate(7, 20);
+//    all_lines[0]->convertToVector();
+//    all_lines[0]->updateParameters();
+//    all_lines[0]->lineDDA();
     
 //    all_polygons[0]->matrixmultipleexample();
 //
@@ -1127,7 +1196,7 @@ int main(int argc, char *argv[]){
     glutCreateWindow("Hello Graphics!!");
     glClearColor(0, 0, 0, 0); //clears the buffer of OpenGL
     //sets display function
-    glutDisplayFunc(update);
+    glutDisplayFunc(display);
     
     glutMainLoop(); //main display loop, will display until terminate
     return 0;
