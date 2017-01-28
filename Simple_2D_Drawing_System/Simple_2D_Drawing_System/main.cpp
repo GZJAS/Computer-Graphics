@@ -814,7 +814,7 @@ public:
             m = 100000;
         Point *intr = new Point();
         intr->x = xmax;
-        intr->y = round(m * (ymax - p1->y) + p1->x);
+        intr->y = round(m * (xmax - p1->x) + p1->y);
         
         // in to in
         if(p1->x <= xmax && p2->x <= xmax){
@@ -905,11 +905,11 @@ public:
         for(int i = 0; i < results.size() - 1; i++){
             p1 = results[i];
             p2 = results[i+1];
-            clipRight(p1, p2);
+            clipTop(p1, p2);
         }
         p1 = results[results.size() - 1];
         p2 = results[0];
-        clipRight(p1, p2);
+        clipTop(p1, p2);
         
         
         if (!tmp.empty()){
@@ -924,11 +924,11 @@ public:
         for(int i = 0; i < results.size() - 1; i++){
             p1 = results[i];
             p2 = results[i+1];
-            clipTop(p1, p2);
+            clipRight(p1, p2);
         }
         p1 = results[results.size() - 1];
         p2 = results[0];
-        clipTop(p1, p2);
+        clipRight(p1, p2);
         
         
         
