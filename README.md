@@ -5,14 +5,13 @@ This project is part of my ECS 175: Computer Graphics course at UC Davis. For th
 
 ## Usage
 This program can be run in several ways. If using a Mac, you can run directly through XCode by opening Simple_2D_Drawing_System.xcodeproj  and clicking `Run`. If you wish to use a command line interface, go to the directory where you cloned this repository and change to 'Simple_2D_Drawing_System/Simple_2D_Drawing_System'. From here:
+
 1. Run `make`
 2. Type `./graphics.out [window_width] [window_height]` 
 
 Window_width and window_height can be set according to user personal preferences. 
 
 If you wish to run this program on linux, decompress the tar file, and run the same commands aforementioned in the corresponding folder. Note: The header file inside 'main.cpp' has been changed as well as the Makefile linker flags. 
-
-
 
 ## Requirements
 The requirements to run this program are OpenGL and GLUt which should be availalbe on most systems. If, however, they are not, you can download them at:
