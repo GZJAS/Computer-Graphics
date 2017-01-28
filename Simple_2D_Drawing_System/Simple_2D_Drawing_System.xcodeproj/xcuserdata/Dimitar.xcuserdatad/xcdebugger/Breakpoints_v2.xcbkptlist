@@ -10,11 +10,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Simple_2D_Drawing_System/main.cpp"
-            timestampString = "507165506.048285"
+            timestampString = "507273217.602744"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1217"
-            endingLineNumber = "1217">
+            startingLineNumber = "1431"
+            endingLineNumber = "1431">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -24,11 +24,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Simple_2D_Drawing_System/main.cpp"
-            timestampString = "507165506.048285"
+            timestampString = "507273217.602744"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1232"
-            endingLineNumber = "1232">
+            startingLineNumber = "1446"
+            endingLineNumber = "1446">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -38,27 +38,75 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Simple_2D_Drawing_System/main.cpp"
-            timestampString = "507165506.048285"
+            timestampString = "507273217.602744"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1246"
-            endingLineNumber = "1246">
+            startingLineNumber = "1460"
+            endingLineNumber = "1460">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            shouldBeEnabled = "No"
+            shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Simple_2D_Drawing_System/main.cpp"
-            timestampString = "507165506.048285"
+            timestampString = "507273986.23667"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "1090"
-            endingLineNumber = "1090"
-            landmarkName = "update()"
-            landmarkType = "9">
+            startingLineNumber = "1136"
+            endingLineNumber = "1136"
+            landmarkName = "interface()"
+            landmarkType = "7">
+            <Locations>
+               <Location
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "interface()"
+                  moduleName = "Simple_2D_Drawing_System"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/Dimitar/Documents/Computer%20Graphics/Simple_2D_Drawing_System/Simple_2D_Drawing_System/main.cpp"
+                  timestampString = "507277978.274006"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "1136"
+                  endingLineNumber = "1136"
+                  offsetFromSymbolStart = "6739">
+               </Location>
+               <Location
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "interface()"
+                  moduleName = "Simple_2D_Drawing_System"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/Dimitar/Documents/Computer%20Graphics/Simple_2D_Drawing_System/Simple_2D_Drawing_System/main.cpp"
+                  timestampString = "507277978.274224"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "1136"
+                  endingLineNumber = "1136"
+                  offsetFromSymbolStart = "7128">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "Simple_2D_Drawing_System/main.cpp"
+            timestampString = "507277974.787213"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "942"
+            endingLineNumber = "942"
+            landmarkName = "class Polygon"
+            landmarkType = "3">
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>

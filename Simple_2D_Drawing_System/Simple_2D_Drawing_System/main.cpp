@@ -24,15 +24,12 @@
 
 #define PI 3.14159265359
 
-using namespace std;
-
+int display_count = 0;
 static int pid = 0;
-
-int window_width = 200;
-int window_height = 200;
-int PixelBufferSize = window_width * window_height * 3;
+int window_width, window_height;
+int PixelBufferSize;
 float *PixelBuffer;
-float xmin = 65, xmax = 90, ymin = 50, ymax = 100;
+float xmin, xmax, ymin, ymax;
 enum{TOP=0x1,BOTTOM=0x2,RIGHT=0x4,LEFT=0x8};
 
 
@@ -40,6 +37,7 @@ enum{TOP=0x1,BOTTOM=0x2,RIGHT=0x4,LEFT=0x8};
 void update();
 void setPixel(int x, int y, double c);
 void clearAllPixels();
+void interface();
 
 
 // Compares the yMins of the given buckets parameters
@@ -47,7 +45,7 @@ bool minYCompare (Bucket* edge1, Bucket* edge2) {
     return edge1->yMin < edge2->yMin;
 }
 
-//Compares the Xs of the given buckets parameters
+// Compares the Xs of the given buckets parameters
 bool xCompare (Bucket* edge1, Bucket* edge2) {
     if (edge1->x < edge2->x) {
         return true;
@@ -58,6 +56,7 @@ bool xCompare (Bucket* edge1, Bucket* edge2) {
     }
 }
 
+// Assigns code to a vertex based on the clipping window size
 unsigned int code(float x,float y){
     unsigned int code=0;
     if(y>ymax)
@@ -71,27 +70,32 @@ unsigned int code(float x,float y){
     return code;
 }
 
+// Base class that all shapes will derive from
 class Geometry {
 public:
     std::vector<Point *> vertices;
-    std::vector<int> xc;
-    std::vector<int> yc;
     std::vector<std::vector<double>> matrix;
+    std::string name;
     
     Point centroid;
-    
     int n, id;
+    
+    // overridden functions in derived classes
+    virtual void draw() = 0;
+    virtual int clip() = 0;
+    virtual void updateParameters() = 0;
+    
     
     // convert vertices vector into matrix (vector of vectors)
     void convertToMatrix(){
-        vector<double>x_row;
-        vector<double>y_row;
+        std::vector<double>x_row;
+        std::vector<double>y_row;
         for(auto vertex : vertices){
             x_row.push_back(static_cast<double>(vertex->x));
             y_row.push_back(static_cast<double>(vertex->y));
         }
         
-        vector<double>bottom_row;
+        std::vector<double>bottom_row;
         for(int i = 0; i < n; i++){
             bottom_row.push_back(1);
         }
@@ -110,27 +114,6 @@ public:
             pt->y = matrix[1][i];
             vertices.push_back(pt);
         }
-    }
-    
-    void printMatrix(std::vector<std::vector<int>> someMatrix){
-        cout << "row size = " << someMatrix.size() << endl;
-        cout << "col size = " << someMatrix[0].size() << endl;
-        for(int i = 0; i < someMatrix.size(); i++){
-
-            for(int j = 0; j < someMatrix[i].size(); j++){
-                
-                cout << someMatrix[i][j] << " ";
-            }
-            cout << endl;
-        }
-        cout << endl;
-    }
-    
-    void printVertices(){
-        for(auto i: vertices){
-            cout << i->x << " " << i->y << endl;
-        }
-        cout << endl;
     }
     
     // find centroid of polygon
@@ -200,7 +183,7 @@ public:
         //        |   sin(alpha)    cos(alpha)beta  0   |
         //        |   0                 0           1   |
         std::vector<std::vector<double>> rot_matrix;
-        vector<double>row = {cos(alpha * PI/180), -sin(alpha * PI/180), 0.0};
+        std::vector<double>row = {cos(alpha * PI/180), -sin(alpha * PI/180), 0.0};
         rot_matrix.push_back(row);
         
         row = {sin(alpha * PI/180), cos(alpha * PI/180), 0.0};
@@ -220,7 +203,7 @@ public:
         //        |    0       beta    0   |
         //        |    0       0       1   |
         std::vector<std::vector<double>> scale_matrix;
-        vector<double>row = {alpha, 0.0, 0.0};
+        std::vector<double>row = {alpha, 0.0, 0.0};
         scale_matrix.push_back(row);
         
         row = {0.0, beta, 0.0};
@@ -240,7 +223,7 @@ public:
         //        |     0     1      y    |
         //        |     0     0      1    |
         std::vector<std::vector<double>> trans_matrix;
-        vector<double>row = {1.0, 0.0, x};
+        std::vector<double>row = {1.0, 0.0, x};
         trans_matrix.push_back(row);
         
         row = {0.0, 1.0, y};
@@ -254,7 +237,7 @@ public:
     }
     
     
-    // translate a polygon or line to (x, y)
+    // translate a polygon or line by (x, y) !!! NOT TO (x, y)
     void translate(int x, int y){
         
         std::vector<std::vector<double>> trans_matrix;
@@ -369,6 +352,7 @@ public:
         y2 = points.at(1)[1];
         id = ::pid++;
         n = (int)vertices.size();
+        name = "Line";
     }
     
     Line(float x1, float y1, float x2, float y2){
@@ -376,15 +360,22 @@ public:
         this->y1 = y1;
         this->x2 = x2;
         this->y2 = y2;
+        id = ::pid++;
+        n = 2;
+        name = "Line";
     }
     
     
-    void updateParameters(){
+    void updateParameters() override {
         this->x1 = vertices[0]->x;
         this->y1 = vertices[0]->y;
         this->x2 = vertices[1]->x;
         this->y2 = vertices[1]->y;
-        n = (int)vertices.size();
+        n = 2;
+    }
+    
+    void draw() override {
+        lineDDA();
     }
     
     // draws a single line given a vertex pair and color according to DDA algorithm
@@ -475,7 +466,7 @@ public:
     }
     
     
-    int clipLine(){
+    int clip() override {
         unsigned int outcode0,outcode1;
         bool accept = false, done = false;
         
@@ -550,12 +541,14 @@ public:
         return -1;
     }
     
-};
+}; // end class definition
 
+// Polygon class
 class Polygon : public Geometry {
 public:
     /* data members */
-
+    std::vector<int> xc;
+    std::vector<int> yc;
     std::vector<Point *>results;
     std::vector<Point *>tmp;
     bool unchanged = false;
@@ -574,10 +567,15 @@ public:
         }
         n = (int)vertices.size();
         id = ::pid++;
+        name = "Polygon";
         
     }
     
-    void updateParameters(){
+    void draw() override {
+        drawPolygon();
+    }
+    
+    void updateParameters() override {
         xc.clear();
         yc.clear();
         for(auto it = vertices.begin(); it != vertices.end(); it++){
@@ -739,18 +737,6 @@ public:
         line.lineDDA();
     }
     
-    struct PointCompare {
-        bool operator()(Point *a, Point *b)
-        {
-            if (a->x == b->x){
-                return a->y < b->y;
-            }
-            
-            return a->x < b->x;
-        }
-    };
-    
-    
     
     void clipLeft(Point *p1, Point *p2){
         float dy = p2->y - p1->y;
@@ -886,7 +872,7 @@ public:
         
     }
     
-    int clipPolygon(){
+    int clip() override {
         results.clear();
         tmp.clear();
         unchanged = false;
@@ -902,7 +888,7 @@ public:
             p2 = results[i+1];
             clipLeft(p1, p2);
         }
-        p1 = results[vertices.size() - 1];
+        p1 = results[results.size() - 1];
         p2 = results[0];
         clipLeft(p1, p2);
         
@@ -919,11 +905,11 @@ public:
         for(int i = 0; i < results.size() - 1; i++){
             p1 = results[i];
             p2 = results[i+1];
-            clipTop(p1, p2);
+            clipRight(p1, p2);
         }
-        p1 = results[vertices.size() - 1];
+        p1 = results[results.size() - 1];
         p2 = results[0];
-        clipTop(p1, p2);
+        clipRight(p1, p2);
         
         
         if (!tmp.empty()){
@@ -938,11 +924,11 @@ public:
         for(int i = 0; i < results.size() - 1; i++){
             p1 = results[i];
             p2 = results[i+1];
-            clipRight(p1, p2);
+            clipTop(p1, p2);
         }
-        p1 = results[vertices.size() - 1];
+        p1 = results[results.size() - 1];
         p2 = results[0];
-        clipRight(p1, p2);
+        clipTop(p1, p2);
         
         
         
@@ -960,7 +946,7 @@ public:
             p2 = results[i+1];
             clipBottom(p1, p2);
         }
-        p1 = results[vertices.size() - 1];
+        p1 = results[results.size() - 1];
         p2 = results[0];
         clipBottom(p1, p2);
         
@@ -984,17 +970,25 @@ public:
     
 }; // end class definition
 
-std::vector<Polygon *> all_polygons; // global variable to hold all polygons
-std::vector<Line *> all_lines; // global variable to hold all polygons
+// global variable to hold all polygons
+std::vector<Geometry *>all_shapes;
 
-template <typename T>
-int getPosByID(std::vector<T> vect, T obj){
-    for(int i = 0; i < vect.size(); i++){
-        if (vect[i]->id == obj->id){
+int getPosByID(Geometry *obj){
+    for(int i = 0; i < all_shapes.size(); i++){
+        if (all_shapes[i]->id == obj->id){
             return i;
         }
     }
     return -1;
+}
+
+Geometry *getObjectByID(int id){
+    for(auto i: all_shapes){
+        if (i->id == id){
+            return i;
+        }
+    }
+    return nullptr;
 }
 
 
@@ -1006,6 +1000,17 @@ void setPixel(int x, int y, double c){
     }
     return;
     
+}
+
+// returns a list of polygon ids inside all_shapes vector
+std::vector<int>findPolygons(){
+    std::vector<int>polygon_ids;
+    for(auto i : all_shapes){
+        if (i->name == "Polygon"){
+            polygon_ids.push_back(i->id);
+        }
+    }
+    return polygon_ids;
 }
 
 
@@ -1023,98 +1028,20 @@ void clearAllPixels(){
 // main display loop, this function will be called again and again by OpenGL
 void display(){
     
-    cout << "entered update" << endl;
-    
+    std::string answer;
     //Misc.
     glClear(GL_COLOR_BUFFER_BIT);
     glLoadIdentity();
     
+    if(display_count){
+        interface();
+    }
+    
     clearAllPixels();
     
-    
-    /********************
-     * polygon clipping
-     ********************/
-    vector<int>polygons_index;
-    for(auto i : all_polygons){
-        int exists = i->clipPolygon();
-        if (exists <= 0){
-            int pos = getPosByID(all_polygons, i);
-            if (pos >= 0){
-                polygons_index.push_back(pos);
-            }
-        }
+    for(auto i : all_shapes){
+        i->draw();
     }
-
-    for (auto i : polygons_index){
-        all_polygons[i] = all_polygons.back();
-        all_polygons.pop_back();
-    }
-
-    for(auto i : all_polygons){
-        i->drawPolygon();
-    }
-    
-
-    
-    /*********************
-        Clipping lines
-     **********************/
-    Line *line = new Line(70, 80, 85, 80);
-    all_lines.push_back(line);
-    
-    
-    vector<int>index;
-    for(auto i : all_lines){
-        int exists = i->clipLine();
-        if (exists <= 0){
-            int pos = getPosByID(all_lines, i);
-            if(pos >= 0){
-                cout << "index = " << pos << endl;
-                index.push_back(pos);
-            }
-        }
-    }
-    
-    for (auto i : index){
-        all_lines[i] = all_lines.back();
-        all_lines.pop_back();
-    }
-
-    
-    for(auto i : all_lines){
-        i->lineBres();
-    }
-    
-//    all_polygons[0]->drawOutlines();
-//    all_polygons[0]->convertToMatrix();
-//    all_polygons[0]->scale(2.0, 2.0);
-//    all_polygons[0]->convertToVector();
-//    all_polygons[0]->updateParameters();
-//    all_polygons[0]->drawOutlines();
-    
-//    all_lines[0]->lineDDA();
-//    all_lines[0]->convertToMatrix();
-//    all_lines[0]->translate(7, 20);
-//    all_lines[0]->convertToVector();
-//    all_lines[0]->updateParameters();
-//    all_lines[0]->lineDDA();
-    
-//    all_polygons[0]->matrixmultipleexample();
-//
-//    
-//    all_polygons[0]->printMatrix(all_polygons[0]->matrix1);
-//    all_polygons[0]->printMatrix(all_polygons[0]->matrix2);
-//    all_polygons[0]->matrixmultipleexample();
-//    
-//    for(auto i : all_polygons){
-//        i->drawPolygon();
-//        i->findCentroid();
-//        cout << "centroid x = " << i->centroid.x << endl;
-//        cout << "centroid y = " << i->centroid.y << endl;
-//    }
-    
-    
     
     //draws pixel on screen, width and height must match pixel buffer dimension
     glDrawPixels(window_width, window_height, GL_RGB, GL_FLOAT, PixelBuffer);
@@ -1122,16 +1049,234 @@ void display(){
     //window refresh
     glFlush();
     
+    display_count = 1;
+    glutPostRedisplay();
 }
 
+void interface(){
+    std::string answer;
+    std::vector<std::array<float, 2>>points;
+    
+    std::cout << std::endl << "What would you like to do?" << std::endl <<
+    "\t(1) Draw new line" << std::endl <<
+    "\t(2) Draw new polygon" << std::endl <<
+    "\t(3) Clip" << std::endl <<
+    "\t(4) Translate" << std::endl <<
+    "\t(5) Scale" << std::endl <<
+    "\t(6) Rotate" << std::endl <<
+    "\t(7) Save to file" << std::endl <<
+    "\t(8) Exit" << std::endl;
+    
+    std::cout << ">> ";
+    std::cin >> answer;
+    
+    if (answer == "1"){
+        std::string algorithm;
+        float x1, y1, x2, y2;
+        std::cout << "Coordinates for first point: " << std::endl;
+        std::cin >> x1 >> y1;
+        std::cout << "Coordinates for second point: " << std::endl;
+        std::cin >> x2 >> y2;
+        Line *line = new Line(x1, y1, x2, y2);
+        all_shapes.push_back(line);
+        
+        
+        std::cout << std::endl << "How would you like to draw the line?" << std::endl <<
+        "\t(a) Using DDA algorithm " << std::endl <<
+        "\t(b) Using Bresenham's algorithm " << std::endl;
+        std::cout << ">> ";
+        std::cin >> algorithm;
+
+        std::cout << "Line created with id " << line->id << std::endl << std::endl;
+
+        if(algorithm == "a"){
+            line->lineDDA();
+        }
+        else if (algorithm == "b"){
+            line->lineBres();
+        }
+    }
+    else if (answer == "2"){
+
+        std::string val1, val2;
+        int numPoints;
+        points.clear();
+        std::cout << "How many vertices will this polygon have? " << std::endl << "points = ";
+        std::cin >> numPoints;
+        
+        for(int i = 0; i < numPoints; i++){
+            std::cout << "Enter coordinates for vertex " << i + 1 << ": " << std::endl;
+            std::cin >> val1 >> val2;
+            float x = std::stof(val1);
+            float y = std::stof(val2);
+            std::array<float, 2>coordinates = {x, y};
+            points.push_back(coordinates);
+        }
+        
+        if(!points.empty()){
+            Polygon *polygon = new Polygon(points);
+            all_shapes.push_back(polygon);
+            polygon->drawPolygon();
+            std::cout << "Polygon created with id " << polygon->id << std::endl << std::endl;
+        }
+
+        
+    }
+    else if (answer == "3"){
+        std::cout << "xmin = ";
+        std::cin >> xmin;
+        std::cout << "xmax = ";
+        std::cin >> xmax;
+        std::cout << "ymin = ";
+        std::cin >> ymin;
+        std::cout << "ymax = ";
+        std::cin >> ymax;
+        
+        std::vector<int>delete_index;
+        for(auto i : all_shapes){
+            int exists = i->clip();
+            if (exists <= 0){
+                int pos = getPosByID(i);
+                if(pos >= 0){
+                    delete_index.push_back(pos);
+                    
+                }
+            }
+        }
+        
+        // delete all shapes whose vertices are outside clipping window
+        for (auto i : delete_index){
+            all_shapes[i] = all_shapes.back();
+            all_shapes.pop_back();
+        }
+        
+    }
+    
+    else if (answer == "4"){
+        int shape_id;
+        int x, y;
+        std::vector<int>polygons;
+        
+        std::cout << "Enter the id of the polygon you wish to translate: " << std::endl;
+        polygons = findPolygons();
+        for(auto poly_id : polygons){
+            std::cout << poly_id << std::endl;
+        }
+        std::cout << ">> ";
+        std::cin >> shape_id;
+        
+        // get the object the user specified
+        Geometry *shape = getObjectByID(shape_id);
+        
+        // get transformation parameters
+        std::cout << "How would you like to translate the Polygon?" << std::endl;
+        std::cout << "x = ";
+        std::cin >> x;
+        std::cout << "y = ";
+        std::cin >> y;
+        
+        // carry out transformation operations
+        shape->convertToMatrix();
+        shape->translate(x, y);
+        shape->convertToVector();
+        shape->updateParameters();
+
+    }
+    else if (answer == "5"){
+        int shape_id;
+        double alpha, beta;
+        std::vector<int>polygons;
+        std::cout << "Enter the id of the polygon you wish to scale: " << std::endl;
+        polygons = findPolygons();
+        for(auto poly_id : polygons){
+            std::cout << poly_id << std::endl;
+        }
+        std::cout << ">> ";
+        std::cin >> shape_id;
+        
+        // get the object the user specified
+        Geometry *shape = getObjectByID(shape_id);
+        
+        // get transformation parameters
+        std::cout << "How would you like to scale the Polygon? " << std::endl;
+        std::cout << "alpha = ";
+        std::cin >> alpha;
+        std::cout << "beta = ";
+        std::cin >> beta;
+        
+        // carry out transformation operations
+        shape->convertToMatrix();
+        shape->scale(alpha, beta);
+        shape->convertToVector();
+        shape->updateParameters();
+        
+    }
+    else if (answer == "6"){
+        int shape_id;
+        double angle;
+        std::vector<int>polygons;
+        std::cout << "Enter the id of the polygon you wish to rotate: " << std::endl;
+        polygons = findPolygons();
+        for(auto poly_id : polygons){
+            std::cout << poly_id << std::endl;
+        }
+        std::cout << ">> ";
+        std::cin >> shape_id;
+        
+        // get the object the user specified
+        Geometry *shape = getObjectByID(shape_id);
+        
+        std::cout << "How would you like to rotate the Polygon? " << std::endl;
+        std::cout << "angle = ";
+        std::cin >> angle;
+ 
+        
+        // carry out transformation operations
+        shape->convertToMatrix();
+        shape->rotate(angle);
+        shape->convertToVector();
+        shape->updateParameters();
+    }
+    else if (answer == "7"){
+        std::ofstream outputFile("file.txt", std::ios::out);
+        
+        // exit program if unable to create file
+        if(!outputFile){
+            std::cerr << "File could not be opened" << std::endl;
+        }
+        
+        outputFile << all_shapes.size() << std::endl << std::endl;
+        
+        for(auto shape : all_shapes){
+            outputFile << shape->n << std::endl;
+            for(auto vertex : shape->vertices){
+                outputFile << vertex->x << " " << vertex->y << std::endl;
+            }
+            outputFile << std::endl;
+        }
+    }
+    else if (answer == "8"){
+        exit(0);
+    }
+    else {
+        std::cout << "Invalid answer. Please try again" << std::endl << std::endl;
+        interface();
+    }
+    
+}
 
 int main(int argc, char *argv[]){
+    
+    window_width = std::atoi(argv[1]);
+    window_height = std::atoi(argv[2]);
+    PixelBufferSize = window_width * window_height * 3;
     
     int numPolygons, numPoints = 0;
     std::string chars;
     
-    std::ifstream inputFile("input.txt");
+    std::ifstream inputFile("file.txt", std::ios::in);
     
+    // exit program if unable to create file
     if(!inputFile){
         std::cerr << "File could not be opened" << std::endl;
     }
@@ -1139,7 +1284,7 @@ int main(int argc, char *argv[]){
     // read in first line of file = number of polygons we are creating
     getline(inputFile, chars);
     numPolygons = atoi(chars.c_str());
-    std::cout << "numPolygons: " << numPolygons << std::endl;
+    
     
     // container to hold coordinates
     std::vector<std::array<float, 2>>points;
@@ -1154,25 +1299,22 @@ int main(int argc, char *argv[]){
             iss.str(chars);
             std::string val1, val2;
             iss >> val1 >> val2;
-            double x = std::stof(val1);
-            double y = std::stof(val2);
-            std::cout << "val1 = " << val1 << std::endl;
-            std::cout << "val2 = " << val2 << std::endl;
+            float x = std::stof(val1);
+            float y = std::stof(val2);
             std::cout << std::endl;
-            std::array<float, 2>coordinates = {static_cast<float>(x), static_cast<float>(y)};
+            std::array<float, 2>coordinates = {x, y};
             points.push_back(coordinates);
             getline(inputFile, chars);
         }
         
         if(!points.empty()){
             if (numPoints == 2){
-                std::cout << "line" << std::endl;
                 Line *line = new Line(points);
-                all_lines.push_back(line);
+                all_shapes.push_back(line);
             }
             else if (numPoints > 2){
                 Polygon *polygon = new Polygon(points);
-                all_polygons.push_back(polygon);
+                all_shapes.push_back(polygon);
             }
             points.clear();
         }
@@ -1187,18 +1329,24 @@ int main(int argc, char *argv[]){
     
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_SINGLE);
+    
     //set window size to 200*200
     glutInitWindowSize(window_width, window_height);
+    
     //set window position
     glutInitWindowPosition(100, 100);
     
     //create and set main window title
     glutCreateWindow("Hello Graphics!!");
-    glClearColor(0, 0, 0, 0); //clears the buffer of OpenGL
+    
+    //clears the buffer of OpenGL
+    glClearColor(0, 0, 0, 0);
+    
     //sets display function
     glutDisplayFunc(display);
     
-    glutMainLoop(); //main display loop, will display until terminate
+    //main display loop, will display until terminate
+    glutMainLoop();
     return 0;
 }
 
