@@ -10,7 +10,7 @@
 
 extern float xmin, xmax, ymin, ymax;
 extern int pid;
-void setPixel(int x, int y, double c);
+void setPixelXY(int x, int y, double c);
 
 // Compares the yMins of the given buckets parameters
 bool minYCompare (Bucket* edge1, Bucket* edge2) {
@@ -155,7 +155,7 @@ void Polygon::processEdgeTable (std::list<Bucket*> edgeTable) {
             b2 = **i;
             
             for (int x = b1.x; x < b2.x; x++) {
-                setPixel(x, scanLine, 1.0);
+                setPixelXY(x, scanLine, 1.0);
             }
         }
         
@@ -197,8 +197,8 @@ void Polygon::drawOutlines(){
         float y1 = vertices[i]->y;
         float x2 = vertices[i+1]->x;
         float y2 = vertices[i+1]->y;
-        Line line(x1, y1, x2, y2);
-        line.lineDDA();
+        Line line(x1, y1, x2, y2, 0, 0);
+        line.lineDDA(x1, y1, x2, y2, "xy");
         
     }
     
@@ -207,8 +207,8 @@ void Polygon::drawOutlines(){
     float y1 = vertices[0]->y;
     float x2 = vertices[vertices.size()-1]->x;
     float y2 = vertices[vertices.size()-1]->y;
-    Line line(x1, y1, x2, y2);
-    line.lineDDA();
+    Line line(x1, y1, x2, y2, 0, 0);
+    line.lineDDA(x1, y1, x2, y2, "xy");
 }
 
 

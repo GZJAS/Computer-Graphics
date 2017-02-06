@@ -30,8 +30,8 @@ public:
     /* member functions */
     // constructor
     Polygon(std::vector<std::array<float, 2>> points);
-    void draw() override;
-    void updateParameters() override;
+    void draw();
+    void updateParameters();
     std::list<Bucket*> createEdges();
     void processEdgeTable (std::list<Bucket*> edgeTable);
     void drawPolygon();

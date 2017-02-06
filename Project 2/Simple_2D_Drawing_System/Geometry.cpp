@@ -12,18 +12,21 @@
 void Geometry::convertToMatrix(){
     std::vector<double>x_row;
     std::vector<double>y_row;
+    std::vector<double>z_row;
     for(auto vertex : vertices){
         x_row.push_back(static_cast<double>(vertex->x));
         y_row.push_back(static_cast<double>(vertex->y));
+        z_row.push_back(static_cast<double>(vertex->z));
     }
     
     std::vector<double>bottom_row;
-    for(int i = 0; i < n; i++){
+    for(int i = 0; i < vertices.size(); i++){
         bottom_row.push_back(1);
     }
     
     matrix.push_back(x_row);
     matrix.push_back(y_row);
+    matrix.push_back(z_row);
     matrix.push_back(bottom_row);
 }
 
@@ -34,6 +37,7 @@ void Geometry::convertToVector(){
         Point *pt = new Point();
         pt->x = matrix[0][i];
         pt->y = matrix[1][i];
+        pt->z = matrix[2][i];
         vertices.push_back(pt);
     }
 }
@@ -73,7 +77,7 @@ void Geometry::findCentroid()
 std::vector<std::vector<double>> Geometry::matrixMultiply(std::vector<std::vector<double>> matrixA, std::vector<std::vector<double>> matrixB){
     
     std::vector<std::vector<double>> matrixC;
-    int r1 = (int)matrixA.size();       // 3
+    int r1 = (int)matrixA.size();       
     int c1 = (int)matrixA[0].size();
     int c2 = n;
     

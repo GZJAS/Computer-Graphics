@@ -47,7 +47,7 @@
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       launchStyle = "0"
       useCustomWorkingDirectory = "YES"
-      customWorkingDirectory = "/Users/Dimitar/Documents/Computer Graphics/Simple_2D_Drawing_System/Simple_2D_Drawing_System"
+      customWorkingDirectory = "/Users/Dimitar/Documents/Computer Graphics/Project 1/Simple_2D_Drawing_System"
       ignoresPersistentStateOnLaunch = "NO"
       debugDocumentVersioning = "YES"
       debugServiceExtension = "internal"

@@ -16,18 +16,18 @@
 class Line : public Geometry {
 public:
     /* data members */
-    float x1, y1, x2, y2;
+    float x1, y1, x2, y2, z1, z2;
     int color = 1.0;
     
     
     /* member functions */
-    Line(std::vector<std::array<float, 2>> points);
-    Line(float x1, float y1, float x2, float y2);
-    void updateParameters() override;
+    Line(Edge *edge);
+    Line(float x1, float y1, float x2, float y2, float z1, float z2);
+    void updateParameters() ;
     unsigned int code(float x,float y);
-    void draw() override;
-    void lineDDA();
-    void lineBres();
-    int clip() override;
+    void draw() ;
+    void lineDDA(float _x1, float _y1, float _x2, float _y2, std::string plane);
+    void lineBres(float _x1, float _y1, float _x2, float _y2, std::string plane);
+    int clip() ;
 }; // end class definition
 #endif /* Line_hpp */

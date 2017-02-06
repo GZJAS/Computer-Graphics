@@ -12,9 +12,10 @@
 		43E9606A1E284CB30016071F /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 43E960691E284CB30016071F /* main.cpp */; };
 		43E960721E284CBC0016071F /* GLUT.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 43E960711E284CBC0016071F /* GLUT.framework */; };
 		43E960741E284CC20016071F /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 43E960731E284CC20016071F /* OpenGL.framework */; };
-		43F454D71E4197B500042413 /* Geometry.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 43F454D51E4197B500042413 /* Geometry.cpp */; };
-		43F454DA1E419AA700042413 /* Polygon.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 43F454D81E419AA700042413 /* Polygon.cpp */; };
-		43F454DD1E419F7400042413 /* Line.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 43F454DB1E419F7400042413 /* Line.cpp */; };
+		43FE2C221E485C4900CE1074 /* Geometry.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 43FE2C1E1E485C4900CE1074 /* Geometry.cpp */; };
+		43FE2C231E485C4900CE1074 /* Line.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 43FE2C201E485C4900CE1074 /* Line.cpp */; };
+		43FE2C281E485C5400CE1074 /* Polygon.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 43FE2C241E485C5400CE1074 /* Polygon.cpp */; };
+		43FE2C291E485C5400CE1074 /* threeD.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 43FE2C261E485C5400CE1074 /* threeD.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -32,17 +33,20 @@
 /* Begin PBXFileReference section */
 		430A9B2A1E303A68008C42EB /* Bucket.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Bucket.hpp; sourceTree = "<group>"; };
 		430A9B2F1E3080D8008C42EB /* Point.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Point.hpp; sourceTree = "<group>"; };
-		431625981E2B2A7400C9F318 /* file.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = file.txt; sourceTree = "<group>"; };
 		43E960661E284CB30016071F /* Simple_2D_Drawing_System */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Simple_2D_Drawing_System; sourceTree = BUILT_PRODUCTS_DIR; };
 		43E960691E284CB30016071F /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		43E960711E284CBC0016071F /* GLUT.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLUT.framework; path = System/Library/Frameworks/GLUT.framework; sourceTree = SDKROOT; };
 		43E960731E284CC20016071F /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
-		43F454D51E4197B500042413 /* Geometry.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Geometry.cpp; sourceTree = "<group>"; };
-		43F454D61E4197B500042413 /* Geometry.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Geometry.hpp; sourceTree = "<group>"; };
-		43F454D81E419AA700042413 /* Polygon.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Polygon.cpp; sourceTree = "<group>"; };
-		43F454D91E419AA700042413 /* Polygon.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Polygon.hpp; sourceTree = "<group>"; };
-		43F454DB1E419F7400042413 /* Line.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Line.cpp; sourceTree = "<group>"; };
-		43F454DC1E419F7400042413 /* Line.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Line.hpp; sourceTree = "<group>"; };
+		43FE2BFD1E485A1400CE1074 /* file.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = file.txt; sourceTree = "<group>"; };
+		43FE2C1D1E485C3F00CE1074 /* Edge.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Edge.hpp; sourceTree = "<group>"; };
+		43FE2C1E1E485C4900CE1074 /* Geometry.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Geometry.cpp; sourceTree = "<group>"; };
+		43FE2C1F1E485C4900CE1074 /* Geometry.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Geometry.hpp; sourceTree = "<group>"; };
+		43FE2C201E485C4900CE1074 /* Line.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Line.cpp; sourceTree = "<group>"; };
+		43FE2C211E485C4900CE1074 /* Line.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Line.hpp; sourceTree = "<group>"; };
+		43FE2C241E485C5400CE1074 /* Polygon.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Polygon.cpp; sourceTree = "<group>"; };
+		43FE2C251E485C5400CE1074 /* Polygon.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Polygon.hpp; sourceTree = "<group>"; };
+		43FE2C261E485C5400CE1074 /* threeD.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = threeD.cpp; sourceTree = "<group>"; };
+		43FE2C271E485C5400CE1074 /* threeD.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = threeD.hpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -79,15 +83,18 @@
 			isa = PBXGroup;
 			children = (
 				430A9B2A1E303A68008C42EB /* Bucket.hpp */,
+				43FE2C1D1E485C3F00CE1074 /* Edge.hpp */,
 				430A9B2F1E3080D8008C42EB /* Point.hpp */,
+				43FE2C1E1E485C4900CE1074 /* Geometry.cpp */,
+				43FE2C1F1E485C4900CE1074 /* Geometry.hpp */,
+				43FE2C201E485C4900CE1074 /* Line.cpp */,
+				43FE2C211E485C4900CE1074 /* Line.hpp */,
 				43E960691E284CB30016071F /* main.cpp */,
-				43F454DB1E419F7400042413 /* Line.cpp */,
-				43F454DC1E419F7400042413 /* Line.hpp */,
-				43F454D91E419AA700042413 /* Polygon.hpp */,
-				43F454D81E419AA700042413 /* Polygon.cpp */,
-				43F454D51E4197B500042413 /* Geometry.cpp */,
-				43F454D61E4197B500042413 /* Geometry.hpp */,
-				431625981E2B2A7400C9F318 /* file.txt */,
+				43FE2C241E485C5400CE1074 /* Polygon.cpp */,
+				43FE2C251E485C5400CE1074 /* Polygon.hpp */,
+				43FE2C261E485C5400CE1074 /* threeD.cpp */,
+				43FE2C271E485C5400CE1074 /* threeD.hpp */,
+				43FE2BFD1E485A1400CE1074 /* file.txt */,
 			);
 			path = Simple_2D_Drawing_System;
 			sourceTree = "<group>";
@@ -158,11 +165,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				430C13B71E3334F700ECFFBC /* Bucket.hpp in Sources */,
-				43F454DA1E419AA700042413 /* Polygon.cpp in Sources */,
-				43F454D71E4197B500042413 /* Geometry.cpp in Sources */,
-				43F454DD1E419F7400042413 /* Line.cpp in Sources */,
+				43FE2C221E485C4900CE1074 /* Geometry.cpp in Sources */,
+				43FE2C281E485C5400CE1074 /* Polygon.cpp in Sources */,
+				43FE2C291E485C5400CE1074 /* threeD.cpp in Sources */,
 				430C13B81E3334F700ECFFBC /* Point.hpp in Sources */,
 				43E9606A1E284CB30016071F /* main.cpp in Sources */,
+				43FE2C231E485C4900CE1074 /* Line.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

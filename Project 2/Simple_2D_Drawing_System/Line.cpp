@@ -11,30 +11,28 @@
 extern int pid;
 extern float xmin, xmax, ymin, ymax;
 enum{TOP=0x1,BOTTOM=0x2,RIGHT=0x4,LEFT=0x8};
-void setPixel(int x, int y, double c);
+void setPixelXY(int x, int y, double c);
+void setPixelYZ(int x, int y, double c);
+void setPixelXZ(int x, int y, double c);
 
-Line::Line(std::vector<std::array<float, 2>> points){
-    for(auto it = points.begin(); it != points.end(); it++){
-        Point *pt = new Point();
-        pt->x = (*it)[0];
-        pt->y = (*it)[1];
-        vertices.push_back(pt);
-    }
-    x1 = points.at(0)[0];
-    y1 = points.at(0)[1];
-    x2 = points.at(1)[0];
-    y2 = points.at(1)[1];
-    id = pid++;
-    n = (int)vertices.size();
+Line::Line(Edge *edge){
+    this->x1 = edge->p1->x;
+    this->y1 = edge->p1->y;
+    this->z1 = edge->p1->z;
+    this->x2 = edge->p2->x;
+    this->y2 = edge->p2->y;
+    this->z2 = edge->p2->z;
+    n = 2;
     name = "Line";
 }
 
-Line::Line(float x1, float y1, float x2, float y2){
+Line::Line(float x1, float y1, float x2, float y2, float z1, float z2){
     this->x1 = x1;
     this->y1 = y1;
+    this->z1 = z1;
     this->x2 = x2;
     this->y2 = y2;
-    id = pid++;
+    this->z2 = z2;
     n = 2;
     name = "Line";
 }
@@ -43,8 +41,10 @@ Line::Line(float x1, float y1, float x2, float y2){
 void Line::updateParameters() {
     this->x1 = vertices[0]->x;
     this->y1 = vertices[0]->y;
+    this->z1 = vertices[1]->z;
     this->x2 = vertices[1]->x;
     this->y2 = vertices[1]->y;
+    this->z2 = vertices[1]->z;
     n = 2;
 }
 
@@ -63,17 +63,17 @@ unsigned int Line::code(float x,float y){
 }
 
 void Line::draw(){
-    lineDDA();
+//    lineDDA();
 }
 
 // draws a single line given a vertex pair and color according to DDA algorithm
-void Line::lineDDA()
+void Line::lineDDA(float _x1, float _y1, float _x2, float _y2, std::string plane)
 {
     float dX,dY,iSteps;
     float xInc,yInc,iCount,x,y;
     
-    dX = x1 - x2;
-    dY = y1 - y2;
+    dX = _x1 - _x2;
+    dY = _y1 - _y2;
     
     if (fabs(dX) > fabs(dY))
     {
@@ -87,12 +87,22 @@ void Line::lineDDA()
     xInc = dX/iSteps;
     yInc = dY/iSteps;
     
-    x = x1;
-    y = y1;
+    x = _x1;
+    y = _y1;
     
     for (iCount=1; iCount<=iSteps; iCount++)
     {
-        setPixel(floor(x),floor(y),color);
+        if (plane == "xy"){
+            setPixelXY(floor(x),floor(y),color);
+        }
+        else if (plane == "yz"){
+            setPixelYZ(floor(x),floor(y),color);
+        }
+        else if (plane == "xz"){
+            setPixelXZ(floor(x),floor(y),color);
+        }
+
+
         x -= xInc;
         y -= yInc;
     }
@@ -101,14 +111,9 @@ void Line::lineDDA()
 
 
 // draws a single line given a vertex pair and color according to Bresenham algorithm
-void Line::lineBres(){
+void Line::lineBres(float _x1, float _y1, float _x2, float _y2, std::string plane){
     
-    const bool steep = (fabs(y2 - y1) > fabs(x2 - x1));
-    
-    float _x1 = x1;
-    float _x2 = x2;
-    float _y1 = y1;
-    float _y2 = y2;
+    const bool steep = (fabs(_y2 - _y1) > fabs(_x2 - _x1));
     
     if(steep)
         // dy > dx, therefore slope > 1
@@ -137,11 +142,28 @@ void Line::lineBres(){
     {
         if(steep)
         {
-            setPixel(y, x, color);
+            if(plane == "xy"){
+                setPixelXY(y, x, color);
+            }
+            else if(plane == "yz"){
+                setPixelYZ(y, x, color);
+            }
+            else if(plane == "xz"){
+                setPixelYZ(y, x, color);
+            }
         }
         else
         {
-            setPixel(x, y, color);
+            if(plane == "xy"){
+                setPixelXY(x, y, color);
+            }
+            else if(plane == "xy"){
+                setPixelXY(x, y, color);
+            }
+            else if(plane == "xz"){
+                setPixelXZ(x, y, color);
+            }
+
         }
         
         error -= dy;

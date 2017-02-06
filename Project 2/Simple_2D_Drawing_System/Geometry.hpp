@@ -11,6 +11,7 @@
 
 #include <stdio.h>
 #include "Point.hpp"
+#include "Edge.hpp"
 #include "Bucket.hpp"
 #include "Geometry.hpp"
 #include <iostream>
@@ -22,11 +23,16 @@ class Geometry {
 public:
     std::vector<Point *> vertices;
     std::vector<std::vector<double>> matrix;
+    std::vector<std::vector<double>>projXYmatrix;
+    std::vector<std::vector<double>>projYZmatrix;
+    std::vector<std::vector<double>>projXZmatrix;
+    
     std::string name;
     
     Point centroid;
     int n, id;
     
+   
     // overridden functions in derived classes
     virtual void draw() = 0;
     virtual int clip() = 0;

@@ -29,11 +29,11 @@
 /* Begin PBXFileReference section */
 		430A9B2A1E303A68008C42EB /* Bucket.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Bucket.h; sourceTree = "<group>"; };
 		430A9B2F1E3080D8008C42EB /* Point.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Point.h; sourceTree = "<group>"; };
-		431625981E2B2A7400C9F318 /* file.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = file.txt; sourceTree = "<group>"; };
 		43E960661E284CB30016071F /* Simple_2D_Drawing_System */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Simple_2D_Drawing_System; sourceTree = BUILT_PRODUCTS_DIR; };
 		43E960691E284CB30016071F /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		43E960711E284CBC0016071F /* GLUT.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLUT.framework; path = System/Library/Frameworks/GLUT.framework; sourceTree = SDKROOT; };
 		43E960731E284CC20016071F /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
+		43FE2BFD1E485A1400CE1074 /* file.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = file.txt; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -72,7 +72,7 @@
 				430A9B2A1E303A68008C42EB /* Bucket.h */,
 				430A9B2F1E3080D8008C42EB /* Point.h */,
 				43E960691E284CB30016071F /* main.cpp */,
-				431625981E2B2A7400C9F318 /* file.txt */,
+				43FE2BFD1E485A1400CE1074 /* file.txt */,
 			);
 			path = Simple_2D_Drawing_System;
 			sourceTree = "<group>";
