@@ -12,14 +12,14 @@
 void Geometry::convertToMatrix(){
     std::vector<double>x_row;
     std::vector<double>y_row;
-    std::vector<double>z_row;
+    std::vector<double >z_row;
     for(auto vertex : vertices){
-        x_row.push_back(static_cast<double>(vertex->x));
-        y_row.push_back(static_cast<double>(vertex->y));
-        z_row.push_back(static_cast<double>(vertex->z));
+        x_row.push_back(vertex->x);
+        y_row.push_back(vertex->y);
+        z_row.push_back(vertex->z);
     }
     
-    std::vector<double>bottom_row;
+    std::vector<double >bottom_row;
     for(int i = 0; i < vertices.size(); i++){
         bottom_row.push_back(1);
     }
@@ -32,52 +32,33 @@ void Geometry::convertToMatrix(){
 
 void Geometry::convertToVector(){
     int numPoints = (int)matrix[0].size();
-    vertices.clear();
     for(int i = 0; i < numPoints; i++){
-        Point *pt = new Point();
-        pt->x = matrix[0][i];
-        pt->y = matrix[1][i];
-        pt->z = matrix[2][i];
-        vertices.push_back(pt);
+        vertices[i]->x = matrix[0][i];
+        vertices[i]->y = matrix[1][i];
+        vertices[i]->z = matrix[2][i];
     }
 }
 
-// find centroid of polygon
-// http://stackoverflow.com/questions/2792443/finding-the-centroid-of-a-polygon
-void Geometry::findCentroid()
-{
-    centroid = {0, 0};
-    float signedArea = 0.0;
-    float x0 = 0.0; // Current vertex X
-    float y0 = 0.0; // Current vertex Y
-    float x1 = 0.0; // Next vertex X
-    float y1 = 0.0; // Next vertex Y
-    float a = 0.0;  // Partial signed area
+void Geometry::findCentroid(){
+    double sumx = 0, sumy = 0, sumz = 0;
     
-    // For all vertices
-    for (int i = 0; i < vertices.size(); ++i)
-    {
-        x0 = vertices[i]->x;
-        y0 = vertices[i]->y;
-        x1 = vertices[(i+1) % n]->x;
-        y1 = vertices[(i+1) % n]->y;
-        a = x0*y1 - x1*y0;
-        signedArea += a;
-        centroid.x += (x0 + x1)*a;
-        centroid.y += (y0 + y1)*a;
+    for (auto i : vertices){
+        sumx += i->x;
+        sumy += i->y;
+        sumz += i->z;
     }
     
-    signedArea *= 0.5;
-    centroid.x /= (6.0*signedArea);
-    centroid.y /= (6.0*signedArea);
-    
+    centroid.x = sumx/vertices.size();
+    centroid.y = sumy/vertices.size();
+    centroid.z = sumz/vertices.size();
 }
+
 
 // multiply two matrices together
 std::vector<std::vector<double>> Geometry::matrixMultiply(std::vector<std::vector<double>> matrixA, std::vector<std::vector<double>> matrixB){
     
     std::vector<std::vector<double>> matrixC;
-    int r1 = (int)matrixA.size();       
+    int r1 = (int)matrixA.size();
     int c1 = (int)matrixA[0].size();
     int c2 = n;
     
@@ -88,7 +69,6 @@ std::vector<std::vector<double>> Geometry::matrixMultiply(std::vector<std::vecto
     for(int i = 0; i < matrixA.size(); i++){
         matrixC.push_back(row);
     }
-    
     
     for(int i = 0; i < r1; i++){
         for (int j = 0; j < c2; j++){
@@ -103,39 +83,73 @@ std::vector<std::vector<double>> Geometry::matrixMultiply(std::vector<std::vecto
 
 
 // return a matrix with given rotate parameters
-std::vector<std::vector<double>> Geometry::create_rot_matrix(double alpha){
-    // rot matrix in the form of:
-    //        |   cost(alpha)   -sin(alpha)     0   |
-    //        |   sin(alpha)    cos(alpha)beta  0   |
-    //        |   0                 0           1   |
+std::vector<std::vector<double>> Geometry::create_rot_matrix(Edge *rotaxis, double angle){
+    //  |   1 - 2b^2 - 2c^2       2ab - 2sc         2ac + 2sb       0   |
+    //  |   2ab + 2sc           1 - 2a^2 - 2c^2     2bc - 2sa       0   |
+    //  |   2ac - 2sb             2bc + 2sa      1 - 2a^2 - 2b^2    0   |
+    //  |       0                     0                 0           1   |
+    
     std::vector<std::vector<double>> rot_matrix;
-    std::vector<double>row = {cos(alpha * M_PI/180), -sin(alpha * M_PI/180), 0.0};
-    rot_matrix.push_back(row);
+    double magnitude, x_squared, y_squared, z_squared;
+
+    float x_diff = rotaxis->p2->x - rotaxis->p1->x;
+    float y_diff = rotaxis->p2->y - rotaxis->p1->y;
+    float z_diff = rotaxis->p2->z - rotaxis->p1->z;
+
+    x_squared = pow(x_diff, 2);
+    y_squared = pow(y_diff, 2);
+    z_squared = pow(z_diff, 2);
+    magnitude = sqrt(x_squared + y_squared +z_squared);
     
-    row = {sin(alpha * M_PI/180), cos(alpha * M_PI/180), 0.0};
-    rot_matrix.push_back(row);
+    float a = x_diff/magnitude;
+    float b = y_diff/magnitude;
+    float c = z_diff/magnitude;
+    float s = cos(angle/2);
     
-    row = {0.0, 0.0, 1.0};
-    rot_matrix.push_back(row);
+    double m11 = 1 - 2 * pow(b, 2) - 2 * pow(c, 2);
+    double m12 = 2 * a * b - 2 * s * c;
+    double m13 = 2 * a * c + 2 * s * b;
+    double m14 = 0.0;
+    double m21 = 2 * a * b + 2 * s * c;
+    double m22 = 1 - 2 * pow(a, 2) - 2 * pow(c, 2);
+    double m23 = 2 * b * c - 2 * s * a;
+    double m24 = 0.0;
+    double m31 = 2 * a * c - 2 * s * b;
+    double m32 = 2 * b * c + 2 * s * a;
+    double m33 = 1 - 2 * pow(a, 2) - 2 * pow(b, 2);
+    double m34 = 0.0;
+    double m41 = 0.0;
+    double m42 = 0.0;
+    double m43 = 0.0;
+    double m44 = 1.0;
+    
+    rot_matrix = {{m11, m12, m13, m14},{m21, m22, m23, m24},{m31, m32, m33, m34},{m41, m42, m43, m44}};
     
     return rot_matrix;
     
 }
 
 // return a matrix with given scaling parameters
-std::vector<std::vector<double>> Geometry::create_scale_matrix(double alpha, double beta){
-    // scale matrix in the form of:
-    //        |    alpha   0       0   |
-    //        |    0       beta    0   |
-    //        |    0       0       1   |
+std::vector<std::vector<double>> Geometry::create_scale_matrix(double Sx, double Sy, double Sz){
+    //  |   Sx      0       0       0   |
+    //  |   0       Sy      0       0   |
+    //  |   0       0       Sz      0   |
+    //  |   0       0       0       1   |
+    
     std::vector<std::vector<double>> scale_matrix;
-    std::vector<double>row = {alpha, 0.0, 0.0};
+    
+    std::vector<double>row = {Sx, 0.0, 0.0, 0.0};
     scale_matrix.push_back(row);
     
-    row = {0.0, beta, 0.0};
+    row = {0.0, Sy, 0.0, 0.0};
     scale_matrix.push_back(row);
     
-    row = {0.0, 0.0, 1.0};
+    
+    row = {0.0, 0.0, Sz, 0.0};
+    scale_matrix.push_back(row);
+    
+    
+    row = {0.0, 0.0, 0.0, 1.0};
     scale_matrix.push_back(row);
     
     return scale_matrix;
@@ -143,19 +157,23 @@ std::vector<std::vector<double>> Geometry::create_scale_matrix(double alpha, dou
 }
 
 // return a matrix with given tranlate parameters
-std::vector<std::vector<double>> Geometry::create_trans_matrix(double x, double y){
-    // translate matrix in the form of:
-    //        |     1     0      x    |
-    //        |     0     1      y    |
-    //        |     0     0      1    |
+std::vector<std::vector<double>> Geometry::create_trans_matrix(double x, double y, double z){
+    //  |   1       0       0       x   |
+    //  |   0       1       0       y   |
+    //  |   0       0       1       z   |
+    //  |   0       0       0       1   |
+
     std::vector<std::vector<double>> trans_matrix;
-    std::vector<double>row = {1.0, 0.0, x};
+    std::vector<double>row = {1.0, 0.0, 0.0, x};
     trans_matrix.push_back(row);
     
-    row = {0.0, 1.0, y};
+    row = {0.0, 1.0, 0.0, y};
     trans_matrix.push_back(row);
     
-    row = {0.0, 0.0, 1.0};
+    row = {0.0, 0.0, 1.0, y};
+    trans_matrix.push_back(row);
+    
+    row = {0.0, 0.0, 0.0, 1.0};
     trans_matrix.push_back(row);
     
     return trans_matrix;
@@ -163,15 +181,15 @@ std::vector<std::vector<double>> Geometry::create_trans_matrix(double x, double 
 }
 
 
-// translate a polygon or line by (x, y) !!! NOT TO (x, y)
-void Geometry::translate(int x, int y){
+// translate a polygon or line by (x, y, z) !!! NOT TO (x, y, z)
+void Geometry::translate(double x, double y, double z){
     
     std::vector<std::vector<double>> trans_matrix;
     std::vector<std::vector<double>> cpymatrix;
     std::vector<std::vector<double>> result_matrix;
     
     // get matrix for translating
-    trans_matrix = create_trans_matrix(x, y);
+    trans_matrix = create_trans_matrix(x, y, z);
     
     // copy matrix
     cpymatrix = matrix;
@@ -185,8 +203,42 @@ void Geometry::translate(int x, int y){
     
 }
 
+void Geometry::scale(double Sx, double Sy, double Sz){
+    std::vector<std::vector<double>> scale_matrix;
+    std::vector<std::vector<double>> cpymatrix;
+    std::vector<std::vector<double>> trans_matrix;
+    std::vector<std::vector<double>> result_matrix;
+    std::vector<std::vector<double>> rev_trans_matrix;
+
+    // find centroid and set coordinates
+    findCentroid();
+
+    // matrix to translate polygon/line's centroid by (-cx, -cy, -cz)
+    rev_trans_matrix = create_trans_matrix(-centroid.x, -centroid.y, -centroid.z);
+
+    // get matrix for rotating polygon
+    scale_matrix = create_scale_matrix(Sx, Sy, Sz);
+
+    // matrix to translate polygon/line's centroid back to (cx, cy, cz)
+    trans_matrix = create_trans_matrix(centroid.x, centroid.y, centroid.z);
+
+
+    // copy matrix
+    cpymatrix = matrix;
+
+    // carry out operations for rotating: translate, rotate, and translate back
+    result_matrix = matrixMultiply(rev_trans_matrix, cpymatrix);
+    result_matrix = matrixMultiply(scale_matrix, result_matrix);
+    result_matrix = matrixMultiply(trans_matrix, result_matrix);
+
+    // copy back into matrix
+    matrix = result_matrix;
+
+}
+
+
 // rotate polygon or line by alpha
-void Geometry::rotate(double alpha){
+void Geometry::rotate(Edge * rotaxis, double angle){
     std::vector<std::vector<double>> rot_matrix;
     std::vector<std::vector<double>> cpymatrix;
     std::vector<std::vector<double>> trans_matrix;
@@ -197,13 +249,13 @@ void Geometry::rotate(double alpha){
     findCentroid();
     
     // matrix to translate polygon/line's centroid by (-cx, -cy)
-    rev_trans_matrix = create_trans_matrix(-centroid.x, -centroid.y);
+    rev_trans_matrix = create_trans_matrix(-centroid.x, -centroid.y, -centroid.z);
     
     // get matrix for rotating polygon
-    rot_matrix = create_rot_matrix(alpha);
+    rot_matrix = create_rot_matrix(rotaxis, angle);
     
     // matrix to translate polygon/line's centroid back to (cx, cy)
-    trans_matrix = create_trans_matrix(centroid.x, centroid.y);
+    trans_matrix = create_trans_matrix(centroid.x, centroid.y, centroid.z);
     
     
     // copy matrix
@@ -219,36 +271,4 @@ void Geometry::rotate(double alpha){
     
 }
 
-void Geometry::scale(double alpha, double beta){
-    std::vector<std::vector<double>> scale_matrix;
-    std::vector<std::vector<double>> cpymatrix;
-    std::vector<std::vector<double>> trans_matrix;
-    std::vector<std::vector<double>> result_matrix;
-    std::vector<std::vector<double>> rev_trans_matrix;
-    
-    // find centroid and set coordinates
-    findCentroid();
-    
-    // matrix to translate polygon/line's centroid by (-cx, -cy)
-    rev_trans_matrix = create_trans_matrix(-centroid.x, -centroid.y);
-    
-    // get matrix for rotating polygon
-    scale_matrix = create_scale_matrix(alpha, beta);
-    
-    // matrix to translate polygon/line's centroid back to (cx, cy)
-    trans_matrix = create_trans_matrix(centroid.x, centroid.y);
-    
-    
-    // copy matrix
-    cpymatrix = matrix;
-    
-    // carry out operations for rotating: translate, rotate, and translate back
-    result_matrix = matrixMultiply(rev_trans_matrix, cpymatrix);
-    result_matrix = matrixMultiply(scale_matrix, result_matrix);
-    result_matrix = matrixMultiply(trans_matrix, result_matrix);
-    
-    // copy back into matrix
-    matrix = result_matrix;
-    
-}
 

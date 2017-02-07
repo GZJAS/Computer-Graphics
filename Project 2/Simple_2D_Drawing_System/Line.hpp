@@ -17,7 +17,6 @@ class Line : public Geometry {
 public:
     /* data members */
     float x1, y1, x2, y2, z1, z2;
-    int color = 1.0;
     
     
     /* member functions */

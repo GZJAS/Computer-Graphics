@@ -341,7 +341,7 @@ void clearAllPixels(){
 // main display loop, this function will be called again and again by OpenGL
 void displayXY(){
     string answer;
-    cout << "displayXY" << endl;
+    cout << "displayXY" << endl << endl;
     glClear(GL_COLOR_BUFFER_BIT);
     glLoadIdentity();
     
@@ -349,6 +349,38 @@ void displayXY(){
     
     for(auto i : all_shapes){
         i->drawXY();
+        cout << "before translate" << endl;
+        for (auto j : i->vertices){
+            cout << j->x << " " << j->y << " "<< j->z << endl;
+        }
+        cout << endl;
+        Point *p1 = new Point();
+        Point *p2 = new Point();
+        p1->x = 50;
+        p1->y = 50;
+        p1->z = 50;
+        p2->x = 100;
+        p2->y = 100;
+        p2->z = 100;
+ 
+        Edge *edge = new Edge();
+        edge->p1 = p1;
+        edge->p2 = p2;
+        
+        i->rotate(edge, 45);
+        i->convertToVector();
+        i->drawXY();
+        cout << "after translate" << endl;
+        for (auto j : i->vertices){
+            cout << j->x << " " << j->y << " "<< j->z << endl;
+        }
+        cout << endl;
+        
+        delete edge;
+        delete p1;
+        delete p2;
+        
+        
     }
     
     
@@ -364,14 +396,18 @@ void displayXY(){
 // main display loop, this function will be called again and again by OpenGL
 void displayYZ(){
     string answer;
-    cout << "displayYZ" << endl;
+    cout << "displayYZ" << endl << endl;;
     glutSetWindow(winYZ);
     glClear(GL_COLOR_BUFFER_BIT);
     glLoadIdentity();
     
     for(auto i : all_shapes){
         i->drawYZ();
+
     }
+    
+    
+
     
     //draws pixel on screen, width and height must match pixel buffer dimension
     glDrawPixels(window_width/2, window_height/2, GL_RGB, GL_FLOAT, PixelBufferYZ);
@@ -447,6 +483,7 @@ int main(int argc, char *argv[]){
             points.push_back(newPoint);
         }
         
+        threeD *newShape = new threeD(points);
         
         // get edges
         getline(inputFile, chars);
@@ -461,13 +498,12 @@ int main(int argc, char *argv[]){
             int p1 = atoi(point1.c_str());
             int p2 = atoi(point2.c_str());
             Edge *newEdge = new Edge();
-            newEdge->p1 = points.at(p1);
-            newEdge->p2 = points.at(p2);
+            newEdge->p1 = &(*newShape->vertices.at(p1));
+            newEdge->p2 = &(*newShape->vertices.at(p2));
             edges.push_back(newEdge);
             
         }
-        
-        threeD *newShape = new threeD(edges, points);
+        newShape->edges = edges;
         all_shapes.push_back(newShape);
         
         getline(inputFile, chars);

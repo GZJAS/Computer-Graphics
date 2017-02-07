@@ -17,7 +17,7 @@ public:
     std::vector<Edge *> edges;
     
     
-    threeD(std::vector<Edge *>edges, std::vector<Point *>points);
+    threeD(std::vector<Point *>points);
 
     void drawXY();
     void drawYZ();

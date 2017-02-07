@@ -23,14 +23,12 @@ class Geometry {
 public:
     std::vector<Point *> vertices;
     std::vector<std::vector<double>> matrix;
-    std::vector<std::vector<double>>projXYmatrix;
-    std::vector<std::vector<double>>projYZmatrix;
-    std::vector<std::vector<double>>projXZmatrix;
-    
     std::string name;
     
     Point centroid;
     int n, id;
+    double color = 1.0;
+    
     
    
     // overridden functions in derived classes
@@ -44,12 +42,12 @@ public:
     void convertToVector();
     void findCentroid();
     std::vector<std::vector<double>> matrixMultiply(std::vector<std::vector<double>> matrixA, std::vector<std::vector<double>> matrixB);
-    std::vector<std::vector<double>> create_rot_matrix(double alpha);
-    std::vector<std::vector<double>> create_scale_matrix(double alpha, double beta);
-    std::vector<std::vector<double>> create_trans_matrix(double x, double y);
-    void translate(int x, int y);
-    void rotate(double alpha);
-    void scale(double alpha, double beta);
+    std::vector<std::vector<double>> create_rot_matrix(Edge *rotaxis, double angle);
+    std::vector<std::vector<double>> create_scale_matrix(double Sx, double Sy, double Sz);
+    std::vector<std::vector<double>> create_trans_matrix(double x, double y, double z);
+    void translate(double x, double y, double z);
+    void rotate(Edge *rotaxis, double angle);
+    void scale(double Sx, double Sy, double Sz);
 };
 
 #endif /* Geometry_hpp */

@@ -76,8 +76,8 @@ std::list<Bucket*> Polygon::createEdges () {
     
     // Create the edge buckets and place in tempEdgeTable
     for (int i = 0; i < n; i++) {
-        v1 = { xc[startIndex], yc[startIndex] };
-        v2 = { xc[i], yc[i] };
+        v1 = { static_cast<float>(xc[startIndex]), static_cast<float>(yc[startIndex]) };
+        v2 = { static_cast<float>(xc[i]), static_cast<float>(yc[i]) };
         
         // Check and swap vertices if not in left to right order
         if (v2.x < v1.x) {
@@ -155,7 +155,7 @@ void Polygon::processEdgeTable (std::list<Bucket*> edgeTable) {
             b2 = **i;
             
             for (int x = b1.x; x < b2.x; x++) {
-                setPixelXY(x, scanLine, 1.0);
+                setPixelXY(x, scanLine, color);
             }
         }
         

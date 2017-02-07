@@ -9,8 +9,7 @@
 #include "threeD.hpp"
 #include "Line.hpp"
 
-threeD::threeD(std::vector<Edge *>edges, std::vector<Point *>points){
-    this->edges = edges;
+threeD::threeD(std::vector<Point *>points){
     this->vertices = points;
     n = (int)vertices.size();
     id++;

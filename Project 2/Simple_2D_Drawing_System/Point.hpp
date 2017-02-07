@@ -9,9 +9,9 @@
 #ifndef Point_h
 #define Point_h
 struct Point {
-    int x;
-    int y;
-    int z;
+    float x;
+    float y;
+    float z;
 };
 
 #endif /* Point_h */
