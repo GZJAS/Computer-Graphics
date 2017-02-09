@@ -17,6 +17,7 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
+#include <algorithm>
 
 // Base class that all shapes will derive from
 class Geometry {
@@ -28,13 +29,6 @@ public:
     Point centroid;
     int n, id;
     double color = 1.0;
-    
-    
-   
-    // overridden functions in derived classes
-    virtual void draw() = 0;
-    virtual int clip() = 0;
-    virtual void updateParameters() = 0;
     
     
     // convert vertices vector into matrix (vector of vectors)

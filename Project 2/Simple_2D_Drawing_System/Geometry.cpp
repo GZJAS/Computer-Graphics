@@ -200,6 +200,8 @@ void Geometry::translate(double x, double y, double z){
     // copy back into matrix
     matrix = result_matrix;
     
+    // update vertices
+    convertToVector();
     
 }
 
@@ -233,6 +235,9 @@ void Geometry::scale(double Sx, double Sy, double Sz){
 
     // copy back into matrix
     matrix = result_matrix;
+    
+    // update vertices
+    convertToVector();
 
 }
 
@@ -269,6 +274,10 @@ void Geometry::rotate(Edge * rotaxis, double angle){
     // copy back into matrix
     matrix = result_matrix;
     
+    // update vertices
+    convertToVector();
+    
 }
+
 
 

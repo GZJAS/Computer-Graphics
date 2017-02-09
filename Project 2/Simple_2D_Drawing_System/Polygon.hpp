@@ -40,7 +40,7 @@ public:
     void clipTop(Point *p1, Point *p2);
     void clipRight(Point *p1, Point *p2);
     void clipBottom(Point *p1, Point *p2);
-    int clip() override;
+    int clip();
     
     
 }; // end class definition

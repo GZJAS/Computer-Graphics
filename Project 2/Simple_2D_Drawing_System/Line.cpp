@@ -8,44 +8,38 @@
 
 #include "Line.hpp"
 
+
 extern int pid;
 extern float xmin, xmax, ymin, ymax;
+extern int window_width, window_height;
 enum{TOP=0x1,BOTTOM=0x2,RIGHT=0x4,LEFT=0x8};
 void setPixelXY(int x, int y, double c);
 void setPixelYZ(int x, int y, double c);
 void setPixelXZ(int x, int y, double c);
+void NDCmapToXY(float x, float y, double color);
+void NDCmapToYZ(float z, float y, double color);
+void NDCmapToXZ(float x, float z, double color);
 
 Line::Line(Edge *edge){
-    this->x1 = edge->p1->x;
-    this->y1 = edge->p1->y;
-    this->z1 = edge->p1->z;
-    this->x2 = edge->p2->x;
-    this->y2 = edge->p2->y;
-    this->z2 = edge->p2->z;
+    this->x1 = &edge->p1->x;
+    this->y1 = &edge->p1->y;
+    this->z1 = &edge->p1->z;
+    this->x2 = &edge->p2->x;
+    this->y2 = &edge->p2->y;
+    this->z2 = &edge->p2->z;
     n = 2;
     name = "Line";
 }
 
 Line::Line(float x1, float y1, float x2, float y2, float z1, float z2){
-    this->x1 = x1;
-    this->y1 = y1;
-    this->z1 = z1;
-    this->x2 = x2;
-    this->y2 = y2;
-    this->z2 = z2;
+    *this->x1 = x1;
+    *this->y1 = y1;
+    *this->z1 = z1;
+    *this->x2 = x2;
+    *this->y2 = y2;
+    *this->z2 = z2;
     n = 2;
     name = "Line";
-}
-
-
-void Line::updateParameters() {
-    this->x1 = vertices[0]->x;
-    this->y1 = vertices[0]->y;
-    this->z1 = vertices[1]->z;
-    this->x2 = vertices[1]->x;
-    this->y2 = vertices[1]->y;
-    this->z2 = vertices[1]->z;
-    n = 2;
 }
 
 // Assigns code to a vertex based on the clipping window size
@@ -93,13 +87,13 @@ void Line::lineDDA(float _x1, float _y1, float _x2, float _y2, std::string plane
     for (iCount=1; iCount<=iSteps; iCount++)
     {
         if (plane == "xy"){
-            setPixelXY(floor(x),floor(y),color);
+            NDCmapToXY(x, y, color);
         }
         else if (plane == "yz"){
-            setPixelYZ(floor(x),floor(y),color);
+            NDCmapToYZ(x, y, color);
         }
         else if (plane == "xz"){
-            setPixelXZ(floor(x),floor(y),color);
+            NDCmapToXZ(x, y, color);
         }
 
 
@@ -180,10 +174,10 @@ int Line::clip(){
     unsigned int outcode0,outcode1;
     bool accept = false, done = false;
     
-    float _x1 = x1;
-    float _x2 = x2;
-    float _y1 = y1;
-    float _y2 = y2;
+    float _x1 = *x1;
+    float _x2 = *x2;
+    float _y1 = *y1;
+    float _y2 = *y2;
     
     
     outcode0 = code(_x1,_y1);
@@ -242,12 +236,11 @@ int Line::clip(){
     while(done == false);
     
     if(accept == true){
-        x1 = _x1;
-        y1 = _y1;
-        x2 = _x2;
-        y2 = _y2;
+        *x1 = _x1;
+        *y1 = _y1;
+        *x2 = _x2;
+        *y2 = _y2;
         return 1;
     }
     return -1;
 }
-    

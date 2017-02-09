@@ -23,10 +23,6 @@ public:
     void drawYZ();
     void drawXZ();
     
-    void draw();
-    int clip();
-    void updateParameters();
-    
     
 };
 
