@@ -9,8 +9,6 @@
 #include "Polygon.hpp"
 #include "threeD.hpp"
 #include "Edge.hpp"
-#include <OpenGL/gl.h>
-#include <OpenGL/glu.h>
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -20,6 +18,7 @@
 
 #ifdef __APPLE__
 #include <GLUT/glut.h>
+#include <OpenGL/glu.h>
 #else
 #include <GL/glut.h>
 #endif
@@ -28,7 +27,6 @@ using namespace std;
 
 // global variables
 int display_count = 0;
-int pid = 0;
 int window_width, window_height;
 int PixelBufferSize;
 float *PixelBufferXY, *PixelBufferYZ, *PixelBufferXZ;
@@ -37,7 +35,7 @@ int winXY, winYZ, winXZ, MainWindow;
 
 // global variable to hold all polygons
 std::vector<threeD*>all_shapes;
-
+std::vector<threeD*>rotate_axis;
 
 // function prototypes;
 void displayXY();
@@ -48,103 +46,101 @@ void setPixelYZ(int z, int y, double c);
 void setPixelXY(int x, int y, double c);
 
 
-
-// convert x,y coordinates to NDC for xy plane
-void NDCmapToXY(float x, float y, double color){
-    float xbar, ybar;
-    
+float findMin(){
     std::vector<float> min;
-    std::vector<float> max;
     
-    // go through all shapes and find their min xy and max xy, and push into respective vectors
+    
+    // go through each shape and find min x, y, z
     for (auto shape: all_shapes){
         std::vector<Point *>::iterator xmin = std::min_element(shape->vertices.begin(), shape->vertices.end(), [](Point *p1, Point *p2){return p1->x < p2->x;});
         std::vector<Point *>::iterator ymin = std::min_element(shape->vertices.begin(), shape->vertices.end(), [](Point *p1, Point *p2){return p1->y < p2->y;});
+        std::vector<Point *>::iterator zmin = std::min_element(shape->vertices.begin(), shape->vertices.end(), [](Point *p1, Point *p2){return p1->z < p2->z;});
         min.push_back((*xmin)->x);
         min.push_back((*ymin)->y);
-        std::vector<Point *>::iterator xmax = std::max_element(shape->vertices.begin(), shape->vertices.end(), [](Point *p1, Point *p2){return p1->x < p2->x;});
-        std::vector<Point *>::iterator ymax = std::max_element(shape->vertices.begin(), shape->vertices.end(), [](Point *p1, Point *p2){return p1->y < p2->y;});
-        max.push_back((*xmax)->x);
-        max.push_back((*ymax)->y);
-        
+        min.push_back((*zmin)->z);
     }
     
-    // find the min and max in those vectors.
+    // find the min out of all x, y, z
     std::vector<float>::iterator min_itr = std::min_element(min.begin(), min.end(), [](float &x1, float &x2){return x1 < x2;});
+
+    return *min_itr;
+}
+
+float findMax(){
+    std::vector<float> max;
+    
+    
+    // go through each shape and find max x, y, z
+    for (auto shape: all_shapes){
+        std::vector<Point *>::iterator xmax = std::max_element(shape->vertices.begin(), shape->vertices.end(), [](Point *p1, Point *p2){return p1->x < p2->x;});
+        std::vector<Point *>::iterator ymax = std::max_element(shape->vertices.begin(), shape->vertices.end(), [](Point *p1, Point *p2){return p1->y < p2->y;});
+        std::vector<Point *>::iterator zmax = std::max_element(shape->vertices.begin(), shape->vertices.end(), [](Point *p1, Point *p2){return p1->z < p2->z;});
+        max.push_back((*xmax)->x);
+        max.push_back((*ymax)->y);
+        max.push_back((*zmax)->z);
+    }
+    
+    // find the max out of all x, y, z
     std::vector<float>::iterator max_itr = std::max_element(max.begin(), max.end(), [](float &x1, float &x2){return x1 < x2;});
     
-    // compute the new point
-    xbar = (x - *min_itr)/(*max_itr + 1 - *min_itr);
-    ybar = (y - *min_itr)/(*max_itr + 1 - *min_itr);
+    return *max_itr;
+}
+
+
+
+// convert x,y coordinates to NDC for xy plane
+void NDCmapToXY(float &x, float &y){
+    float xbar, ybar, min, max;
     
+    // find min and max
+    min = findMin();
+    max = findMax();
+    
+    // compute the new point
+    xbar = (x - min)/(max + 1 - min);
+    ybar = (y - min)/(max + 1 - min);
+
+    // find corresponding pixel
     x = xbar * window_width/2;
     y = ybar * window_height/2;
-    
-    setPixelXY(x, y, color);
     
 }
 
 // convert y,z coordinates to NDC for yz plane
-void NDCmapToYZ(float z, float y, double color){
-    float zbar, ybar;
+void NDCmapToYZ(float &z, float &y){
+    float zbar, ybar, min, max;
     
-    std::vector<float> min;
-    std::vector<float> max;
-    for (auto shape: all_shapes){
-        std::vector<Point *>::iterator zmin = std::min_element(shape->vertices.begin(), shape->vertices.end(), [](Point *p1, Point *p2){return p1->z < p2->z;});
-        std::vector<Point *>::iterator ymin = std::min_element(shape->vertices.begin(), shape->vertices.end(), [](Point *p1, Point *p2){return p1->y < p2->y;});
-        min.push_back((*zmin)->z);
-        min.push_back((*ymin)->y);
-        std::vector<Point *>::iterator zmax = std::max_element(shape->vertices.begin(), shape->vertices.end(), [](Point *p1, Point *p2){return p1->z < p2->z;});
-        std::vector<Point *>::iterator ymax = std::max_element(shape->vertices.begin(), shape->vertices.end(), [](Point *p1, Point *p2){return p1->y < p2->y;});
-        max.push_back((*zmax)->z);
-        max.push_back((*ymax)->y);
-        
-    }
+    // find min and max
+    min = findMin();
+    max = findMax();
     
-    std::vector<float>::iterator min_itr = std::min_element(min.begin(), min.end(), [](float &x1, float &x2){return x1 < x2;});
-    std::vector<float>::iterator max_itr = std::max_element(max.begin(), max.end(), [](float &x1, float &x2){return x1 < x2;});
+    // compute new NDC point
+    zbar = (z - min)/(max + 1 - min);
+    ybar = (y - min)/(max + 1 - min);
     
-    
-    zbar = (z - *min_itr)/(*max_itr + 1 - *min_itr);
-    ybar = (y - *min_itr)/(*max_itr + 1 - *min_itr);
-    
+    // find corresponding pixel
     z = zbar * window_width/2;
     y = ybar * window_height/2;
     
-    setPixelYZ(y, z, color);
     
 }
 
 // convert x,z coordinates to NDC for xz plane
-void NDCmapToXZ(float x, float z, double color){
-    float xbar, zbar;
+void NDCmapToXZ(float &x, float &z){
+    float xbar, zbar, min, max;
+ 
+    // find min and max
+    min = findMin();
+    max = findMax();
     
-    std::vector<float> min;
-    std::vector<float> max;
-    for (auto shape: all_shapes){
-        std::vector<Point *>::iterator xmin = std::min_element(shape->vertices.begin(), shape->vertices.end(), [](Point *p1, Point *p2){return p1->x < p2->x;});
-        std::vector<Point *>::iterator zmin = std::min_element(shape->vertices.begin(), shape->vertices.end(), [](Point *p1, Point *p2){return p1->z < p2->z;});
-        min.push_back((*xmin)->x);
-        min.push_back((*zmin)->z);
-        std::vector<Point *>::iterator xmax = std::max_element(shape->vertices.begin(), shape->vertices.end(), [](Point *p1, Point *p2){return p1->x < p2->x;});
-        std::vector<Point *>::iterator zmax = std::max_element(shape->vertices.begin(), shape->vertices.end(), [](Point *p1, Point *p2){return p1->z < p2->z;});
-        max.push_back((*xmax)->x);
-        max.push_back((*zmax)->z);
-        
-    }
+    // compute new NDC point
+    xbar = (x - min)/(max + 1 - min);
+    zbar = (z - min)/(max + 1 - min);
     
-    std::vector<float>::iterator min_itr = std::min_element(min.begin(), min.end(), [](float &x1, float &x2){return x1 < x2;});
-    std::vector<float>::iterator max_itr = std::max_element(max.begin(), max.end(), [](float &x1, float &x2){return x1 < x2;});
-    
-    
-    xbar = (x - *min_itr)/(*max_itr + 1 - *min_itr);
-    zbar = (z - *min_itr)/(*max_itr + 1 - *min_itr);
-    
+    // find corresponding pixel
     x = xbar * window_width/2;
     z = zbar * window_height/2;
     
-    setPixelXZ(x, z, color);
 }
 
 
@@ -171,7 +167,7 @@ std::vector<int>findPolygons(){
 
 // sets the local in pixelBuffer to c given x and y coordinates
 void setPixelYZ(int z, int y, double c){
-    int i = (y * window_width/2 + z) * 3;
+    int i = (z * window_width/2 + y) * 3;
     for(int j = 0; j < 3; j++){
         PixelBufferYZ[i + j] = c;
     }
@@ -339,7 +335,7 @@ void interface(){
         shape->rotate(edge, angle);
     }
     else if (answer == "4"){
-        std::ofstream outputFile("output.txt", std::ios::out);
+        std::ofstream outputFile("file.txt", std::ios::out);
 
         // exit program if unable to create file
         if(!outputFile){
@@ -357,11 +353,15 @@ void interface(){
                 outputFile << findEdges(shape, edge->p1) << " " << findEdges(shape, edge->p2) << std::endl;
                 
             }
+            outputFile << std::endl;
         }
 
     }
     else if (answer == "5"){
         exit(0);
+    }
+    else if (answer == "6"){
+        return;
     }
     else {
         std::cout << "Invalid answer. Please try again" << std::endl << std::endl;
@@ -372,70 +372,31 @@ void interface(){
 
 // main display loop, this function will be called again and again by OpenGL
 void displayXY(){
-    string answer;
-    cout << "displayXY" << endl << endl;
     glClear(GL_COLOR_BUFFER_BIT);
     glLoadIdentity();
     
     clearXYPixels();
     
-    cout << "cleared pixels" << endl;
     for(auto i : all_shapes){
-        
-        cout << "before translate" << endl;
-        for (auto j : i->vertices){
-            cout << j->x << " " << j->y << " "<< j->z << endl;
-        }
-        Point *p1 = new Point();
-        Point *p2 = new Point();
-        p1->x = 50;
-        p1->y = 50;
-        p1->z = 50;
-        p2->x = 100;
-        p2->y = 100;
-        p2->z = 100;
- 
-        Edge *edge = new Edge();
-        edge->p1 = p1;
-        edge->p2 = p2;
-        Line  *line = new Line(edge);
-        line->color = 0.5;
-        
-        i->rotate(edge, 45);
-        i->convertToVector();
-        cout << "after translate" << endl;
-        for (auto j : i->vertices){
-            cout << j->x << " " << j->y << " "<< j->z << endl;
-        }
-        cout << endl;
-        
-        delete p1;
-        delete p2;
-        delete edge;
-
         i->drawXY();
-        
     }
-    
-    
     
     //draws pixel on screen, width and height must match pixel buffer dimension
     glDrawPixels(window_width/2, window_height/2, GL_RGB, GL_FLOAT, PixelBufferXY);
     
     //window refresh
     glFlush();
+    glutPostRedisplay();
     
 }
 
 // main display loop, this function will be called again and again by OpenGL
 void displayYZ(){
-    cout << "displayYZ" << endl << endl;;
     glutSetWindow(winYZ);
     glClear(GL_COLOR_BUFFER_BIT);
     glLoadIdentity();
     
     clearYZPixels();
-    
     
     for(auto i : all_shapes){
         i->drawYZ();
@@ -446,26 +407,34 @@ void displayYZ(){
     glDrawPixels(window_width/2, window_height/2, GL_RGB, GL_FLOAT, PixelBufferYZ);
     
     glFlush();
+    glutPostRedisplay();
 }
 
 // main display loop, this function will be called again and again by OpenGL
 void displayXZ(){
     string answer;
-    cout << "displayXZ" << endl;
     glutSetWindow(winXZ);
     glClear(GL_COLOR_BUFFER_BIT);
     glLoadIdentity();
     
     clearXZPixels();
     
+    if(display_count){
+        interface();
+    }
+    
     for (auto i: all_shapes){
         i->drawXZ();
     }
+
     
     //draws pixel on screen, width and height must match pixel buffer dimension
     glDrawPixels(window_width/2, window_height/2, GL_RGB, GL_FLOAT, PixelBufferXZ);
     
+    display_count = 1;
+    
     glFlush();
+    glutPostRedisplay();
 }
 
 void display(){

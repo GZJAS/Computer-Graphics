@@ -8,17 +8,12 @@
 
 #include "Line.hpp"
 
-
-extern int pid;
 extern float xmin, xmax, ymin, ymax;
 extern int window_width, window_height;
 enum{TOP=0x1,BOTTOM=0x2,RIGHT=0x4,LEFT=0x8};
 void setPixelXY(int x, int y, double c);
 void setPixelYZ(int x, int y, double c);
 void setPixelXZ(int x, int y, double c);
-void NDCmapToXY(float x, float y, double color);
-void NDCmapToYZ(float z, float y, double color);
-void NDCmapToXZ(float x, float z, double color);
 
 Line::Line(Edge *edge){
     this->x1 = &edge->p1->x;
@@ -87,15 +82,14 @@ void Line::lineDDA(float _x1, float _y1, float _x2, float _y2, std::string plane
     for (iCount=1; iCount<=iSteps; iCount++)
     {
         if (plane == "xy"){
-            NDCmapToXY(x, y, color);
+            setPixelXY(x, y, color);
         }
         else if (plane == "yz"){
-            NDCmapToYZ(x, y, color);
+            setPixelYZ(x, y, color);
         }
         else if (plane == "xz"){
-            NDCmapToXZ(x, y, color);
+            setPixelXZ(x, y, color);
         }
-
 
         x -= xInc;
         y -= yInc;

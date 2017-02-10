@@ -10,7 +10,6 @@
 #define Line_hpp
 
 #include "Geometry.hpp"
-#include "threeD.hpp"
 #include <stdio.h>
 #include <array>
 
@@ -18,7 +17,6 @@ class Line : public Geometry {
 public:
     /* data members */
     float *x1, *y1, *x2, *y2, *z1, *z2;
-    threeD *shape;
     
     /* member functions */
     Line(Edge *edge);

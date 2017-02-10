@@ -9,19 +9,22 @@
 #ifndef threeD_hpp
 #define threeD_hpp
 
-#include <stdio.h>
+
 #include "Geometry.hpp"
+#include "Line.hpp"
+#include <stdio.h>
 
 class threeD : public Geometry {
 public:
     std::vector<Edge *> edges;
-    
+
     
     threeD(std::vector<Point *>points);
 
     void drawXY();
     void drawYZ();
     void drawXZ();
+
     
     
 };

@@ -8,7 +8,7 @@
 
 #ifndef Geometry_hpp
 #define Geometry_hpp
-
+#include <cmath>
 #include <stdio.h>
 #include "Point.hpp"
 #include "Edge.hpp"
@@ -16,8 +16,9 @@
 #include "Geometry.hpp"
 #include <iostream>
 #include <vector>
-#include <cmath>
 #include <algorithm>
+
+static int global_id = 0.0;
 
 // Base class that all shapes will derive from
 class Geometry {
@@ -25,7 +26,6 @@ public:
     std::vector<Point *> vertices;
     std::vector<std::vector<double>> matrix;
     std::string name;
-    
     Point centroid;
     int n, id;
     double color = 1.0;

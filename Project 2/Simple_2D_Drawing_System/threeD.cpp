@@ -7,12 +7,15 @@
 //
 
 #include "threeD.hpp"
-#include "Line.hpp"
+
+void NDCmapToXY(float &x, float &y);
+void NDCmapToYZ(float &z, float &y);
+void NDCmapToXZ(float &x, float &z);
 
 threeD::threeD(std::vector<Point *>points){
     this->vertices = points;
     n = (int)vertices.size();
-    id++;
+    id = global_id++;
     convertToMatrix();
 }
 
@@ -25,7 +28,10 @@ void threeD::drawXY(){
         float y1 = *line->y1;
         float x2 = *line->x2;
         float y2 = *line->y2;
-        line->shape = this;
+        
+        
+        NDCmapToXY(x1, y1);
+        NDCmapToXY(x2, y2);
         
         // project onto xy plane
         line->lineDDA(x1, y1, x2, y2, "xy");
@@ -42,7 +48,9 @@ void threeD::drawYZ(){
         float z1 = *line->z1;
         float y2 = *line->y2;
         float z2 = *line->z2;
-        line->shape = this;
+        
+        NDCmapToYZ(y1, z1);
+        NDCmapToYZ(y2, z2);
         
         // project onto yz plane
         line->lineDDA(y1, z1, y2, z2, "yz");
@@ -60,7 +68,10 @@ void threeD::drawXZ(){
         float z1 = *line->z1;
         float x2 = *line->x2;
         float z2 = *line->z2;
-        line->shape = this;
+        
+        
+        NDCmapToXZ(x1, z1);
+        NDCmapToXZ(x2, z2);
         
         // project onto xz plane
         line->lineDDA(x1, z1, x2, z2, "xz");

@@ -8,6 +8,7 @@
 
 #include "Geometry.hpp"
 
+
 // convert vertices vector into matrix (vector of vectors)
 void Geometry::convertToMatrix(){
     std::vector<double>x_row;
@@ -60,9 +61,10 @@ std::vector<std::vector<double>> Geometry::matrixMultiply(std::vector<std::vecto
     std::vector<std::vector<double>> matrixC;
     int r1 = (int)matrixA.size();
     int c1 = (int)matrixA[0].size();
-    int c2 = n;
+    int c2 = (int)matrixB[0].size();
     
     std::vector<double>row;
+    
     for(int i = 0; i < n; i++){
         row.push_back(0);
     }
@@ -90,34 +92,36 @@ std::vector<std::vector<double>> Geometry::create_rot_matrix(Edge *rotaxis, doub
     //  |       0                     0                 0           1   |
     
     std::vector<std::vector<double>> rot_matrix;
-    double magnitude, x_squared, y_squared, z_squared;
+    double L, u_squared, v_squared, w_squared, L_root;
 
-    float x_diff = rotaxis->p2->x - rotaxis->p1->x;
-    float y_diff = rotaxis->p2->y - rotaxis->p1->y;
-    float z_diff = rotaxis->p2->z - rotaxis->p1->z;
+    float a = rotaxis->p1->x;
+    float b = rotaxis->p1->y;
+    float c = rotaxis->p1->z;
+    float d = rotaxis->p2->x;
+    float e = rotaxis->p2->y;
+    float f = rotaxis->p2->z;
+    float u = d - a;
+    float v = e - b;
+    float w = f - c;
 
-    x_squared = pow(x_diff, 2);
-    y_squared = pow(y_diff, 2);
-    z_squared = pow(z_diff, 2);
-    magnitude = sqrt(x_squared + y_squared +z_squared);
+    u_squared = pow(u, 2);
+    v_squared = pow(v, 2);
+    w_squared = pow(w, 2);
+    L = u_squared + v_squared + w_squared;
+    L_root = sqrt(L);
     
-    float a = x_diff/magnitude;
-    float b = y_diff/magnitude;
-    float c = z_diff/magnitude;
-    float s = cos(angle/2);
-    
-    double m11 = 1 - 2 * pow(b, 2) - 2 * pow(c, 2);
-    double m12 = 2 * a * b - 2 * s * c;
-    double m13 = 2 * a * c + 2 * s * b;
-    double m14 = 0.0;
-    double m21 = 2 * a * b + 2 * s * c;
-    double m22 = 1 - 2 * pow(a, 2) - 2 * pow(c, 2);
-    double m23 = 2 * b * c - 2 * s * a;
-    double m24 = 0.0;
-    double m31 = 2 * a * c - 2 * s * b;
-    double m32 = 2 * b * c + 2 * s * a;
-    double m33 = 1 - 2 * pow(a, 2) - 2 * pow(b, 2);
-    double m34 = 0.0;
+    double m11 = (u_squared + (v_squared + w_squared) * cos(angle)) / L;
+    double m12 = (u * v * (1 - cos(angle)) - w * L_root * sin(angle)) / L;
+    double m13 = (u * w * (1 - cos(angle)) + v * L_root * sin(angle)) / L;
+    double m14 = ((a * (v_squared + w_squared) - u*(b * v + c * w)) * (1 - cos(angle)) + (b * w - c * v) * L_root * sin(angle)) / L;
+    double m21 = (u * v * (1 - cos(angle)) + w * L_root * sin(angle)) / L;
+    double m22 = (v_squared + (u_squared + w_squared) * cos(angle)) / L;
+    double m23 = (v * w * (1 - cos(angle)) - u * L_root * sin(angle)) / L;
+    double m24 = ((b * (u_squared + w_squared) - v*(a * u + c * w)) * (1 - cos(angle)) + (c * u - a * w) * L_root * sin(angle)) / L;
+    double m31 = (u * w * (1 - cos(angle)) - v * L_root * sin(angle)) / L;
+    double m32 = (v * w * (1 - cos(angle)) + u * L_root * sin(angle)) / L;
+    double m33 = (w_squared + (u_squared + v_squared) * cos(angle)) / L;
+    double m34 = ((c * (u_squared + v_squared) - w*(a * u + b * v)) * (1 - cos(angle)) + (a * v - b * u) * L_root * sin(angle)) / L;
     double m41 = 0.0;
     double m42 = 0.0;
     double m43 = 0.0;
@@ -170,8 +174,9 @@ std::vector<std::vector<double>> Geometry::create_trans_matrix(double x, double 
     row = {0.0, 1.0, 0.0, y};
     trans_matrix.push_back(row);
     
-    row = {0.0, 0.0, 1.0, y};
+    row = {0.0, 0.0, 1.0, z};
     trans_matrix.push_back(row);
+    
     
     row = {0.0, 0.0, 0.0, 1.0};
     trans_matrix.push_back(row);
@@ -267,9 +272,9 @@ void Geometry::rotate(Edge * rotaxis, double angle){
     cpymatrix = matrix;
     
     // carry out operations for rotating: translate, rotate, and translate back
-    result_matrix = matrixMultiply(rev_trans_matrix, cpymatrix);
-    result_matrix = matrixMultiply(rot_matrix, result_matrix);
-    result_matrix = matrixMultiply(trans_matrix, result_matrix);
+//    result_matrix = matrixMultiply(rev_trans_matrix, cpymatrix);
+    result_matrix = matrixMultiply(rot_matrix, cpymatrix);
+//    result_matrix = matrixMultiply(trans_matrix, result_matrix);
     
     // copy back into matrix
     matrix = result_matrix;

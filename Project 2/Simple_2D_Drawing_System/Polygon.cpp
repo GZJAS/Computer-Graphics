@@ -9,7 +9,6 @@
 #include "Polygon.hpp"
 
 extern float xmin, xmax, ymin, ymax;
-extern int pid;
 void setPixelXY(int x, int y, double c);
 
 // Compares the yMins of the given buckets parameters
@@ -40,7 +39,7 @@ Polygon::Polygon(std::vector<std::array<float, 2>> points){
         
     }
     n = (int)vertices.size();
-    id = pid++;
+    id = global_id++;
     name = "Polygon";
     
 }
