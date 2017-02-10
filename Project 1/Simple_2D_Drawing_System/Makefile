@@ -1,4 +1,8 @@
-graphics.out: main.cpp Bucket.h Point.h
-	g++ -w -g -std=c++11 -o graphics.out main.cpp -framework OpenGL -framework GLUT
+mac:
+	make -f makemac
+
+linux:
+	make -f makelinux
+
 clean: 
 	rm -rf *.out *.o

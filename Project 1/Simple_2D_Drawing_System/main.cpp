@@ -7,9 +7,6 @@
 //
 #include "Bucket.h"
 #include "Point.h"
-#include <OpenGL/gl.h>
-#include <OpenGL/glu.h>
-#include <GLUT/glut.h>
 #include <iostream>
 #include <math.h>
 #include <iostream>
@@ -21,8 +18,16 @@
 #include <cstdlib>
 #include <array>
 #include <list>
+#include <cmath>
 
-#define PI 3.14159265359
+#ifdef __APPLE__
+#include <GLUT/glut.h>
+#include <OpenGL/glu.h>
+#else
+#include <GL/glut.h>
+#endif
+
+
 
 int display_count = 0;
 static int pid = 0;
@@ -183,10 +188,10 @@ public:
         //        |   sin(alpha)    cos(alpha)beta  0   |
         //        |   0                 0           1   |
         std::vector<std::vector<double>> rot_matrix;
-        std::vector<double>row = {cos(alpha * PI/180), -sin(alpha * PI/180), 0.0};
+        std::vector<double>row = {cos(alpha * M_PI/180), -sin(alpha * M_PI/180), 0.0};
         rot_matrix.push_back(row);
         
-        row = {sin(alpha * PI/180), cos(alpha * PI/180), 0.0};
+        row = {sin(alpha * M_PI/180), cos(alpha * M_PI/180), 0.0};
         rot_matrix.push_back(row);
         
         row = {0.0, 0.0, 1.0};
