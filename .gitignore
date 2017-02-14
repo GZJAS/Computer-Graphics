@@ -1,7 +1,6 @@
 # Xcode
 
 ## Build generated
- build/
 
 ## Object files
 *.o
@@ -15,4 +14,9 @@ DerivedData/
 *.xccheckout
 *.xcscmblueprint
 
-Simple_2D_Drawing_System.xcodeproj/
+Project 1/build/
+Project 2/build/
+Project 1/Simple_2D_Drawing_System.xcodeproj/
+Project 2/Simple_2D_Drawing_System.xcodeproj/
+Project 1/Simple_2D_Drawing_System.build/
+Project 1/Simple_2D_Drawing_System.build/
