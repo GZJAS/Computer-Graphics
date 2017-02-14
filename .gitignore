@@ -1,12 +1,18 @@
 # Xcode
 
 ## Build generated
- /[Bb]uild/
  build/
 
-DerivedData/
- *.xcodeproj/
+## Object files
+*.o
+*.out
 
- ## Object files
- *.o
- *.out
+## Build generated
+DerivedData/
+
+## Other
+*.moved-aside
+*.xccheckout
+*.xcscmblueprint
+
+Simple_2D_Drawing_System.xcodeproj/
