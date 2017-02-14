@@ -1,9 +1,12 @@
 # Xcode
 
 ## Build generated
+ /[Bb]uild/
  build/
- .xcodeproj/
+
+DerivedData/
+ *.xcodeproj/
 
  ## Object files
- .o
- .out
+ *.o
+ *.out
