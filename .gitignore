@@ -1,22 +1,14 @@
-# Xcode
-
-## Build generated
-
-## Object files
+# Object files
 *.o
+
+#Executables
 *.out
 
-## Build generated
-DerivedData/
+build/
+Simple_2D_Drawing_System.xcodeproj/
 
-## Other
-*.moved-aside
-*.xccheckout
-*.xcscmblueprint
 
-Project 1/build/
-Project 2/build/
-Project 1/Simple_2D_Drawing_System.xcodeproj/
-Project 2/Simple_2D_Drawing_System.xcodeproj/
-Project 1/Simple_2D_Drawing_System.build/
-Project 1/Simple_2D_Drawing_System.build/
+
+
+
+
