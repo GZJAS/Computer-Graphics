@@ -11,9 +11,9 @@
 extern float xmin, xmax, ymin, ymax;
 extern int window_width, window_height;
 enum{TOP=0x1,BOTTOM=0x2,RIGHT=0x4,LEFT=0x8};
-void setPixelXY(int x, int y, double c);
-void setPixelYZ(int x, int y, double c);
-void setPixelXZ(int x, int y, double c);
+void setPixelXY(int x, int y, Color color);
+void setPixelYZ(int x, int y, Color color);
+void setPixelXZ(int x, int y, Color color);
 
 Line::Line(Edge *edge){
     this->x1 = &edge->p1->x;

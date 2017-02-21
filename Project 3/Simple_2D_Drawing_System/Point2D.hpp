@@ -19,6 +19,7 @@ struct Point2D{
 
     Point2D(){}
     
+    
     bool operator<(const Point2D &right) const
     {
         return this->a != right.a || this->b != right.b;

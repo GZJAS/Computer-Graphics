@@ -27,7 +27,6 @@ public:
     std::vector<std::vector<double>> matrix;
     std::string name;
     int id;
-    double color = 1.0;
     Point centroid;
     
     

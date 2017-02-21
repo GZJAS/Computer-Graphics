@@ -9,7 +9,7 @@
 #include "Polygon.hpp"
 #include "threeD.hpp"
 #include "Edge.hpp"
-#include "Color.hpp"
+#include "Color.hpp" 
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -39,6 +39,7 @@ std::map<std::string, Color> ColorMap = {{"red", {1, 0, 0}},
                                         {"green", {0, 1, 0}},
                                         {"blue", {0, 0, 1}},
                                         {"white", {1, 1, 1}}};
+
 
 Point *threeD::lightsource = new Point(0, 0, 0, ColorMap["white"]);
 Point *threeD::viewsource = new Point(0, 50, 100);
@@ -81,31 +82,31 @@ std::vector<int>findPolygons(){
 
 
 // sets the local in pixelBuffer to c given x and y coordinates
-void setPixelYZ(int z, int y, double c){
+void setPixelYZ(int z, int y, Color color){
     int i = (y * window_width/2 + z) * 3;
-    for(int j = 0; j < 3; j++){
-        PixelBufferYZ[i + j] = c;
-    }
+    PixelBufferYZ[i] = color.r;
+    PixelBufferYZ[i + 1] = color.g;
+    PixelBufferYZ[i + 2] = color.b;
     return;
     
 }
 
 // sets the local in pixelBuffer to c given x and y coordinates
-void setPixelXZ(int x, int z, double c){
+void setPixelXZ(int x, int z, Color color){
     int i = (z * window_width/2 + x) * 3;
-    for(int j = 0; j < 3; j++){
-        PixelBufferXZ[i + j] = c;
-    }
+    PixelBufferXZ[i] = color.r;
+    PixelBufferXZ[i + 1] = color.g;
+    PixelBufferXZ[i + 2] = color.b;
     return;
     
 }
 
 // sets the local in pixelBuffer to c given x and y coordinates
-void setPixelXY(int x, int y, double c){
+void setPixelXY(int x, int y, Color color){
     int i = (y * window_width/2 + x) * 3;
-    for(int j = 0; j < 3; j++){
-        PixelBufferXY[i + j] = c;
-    }
+    PixelBufferXY[i] = color.r;
+    PixelBufferXY[i + 1] = color.g;
+    PixelBufferXY[i + 2] = color.b;
     return;
     
 }

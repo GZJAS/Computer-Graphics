@@ -9,9 +9,9 @@
 #include "Polygon.hpp"
 
 extern float xmin, xmax, ymin, ymax;
-void setPixelXY(int x, int y, double c);
-void setPixelYZ(int x, int y, double c);
-void setPixelXZ(int x, int y, double c);
+void setPixelXY(int x, int y, Color color);
+void setPixelYZ(int x, int y, Color color);
+void setPixelXZ(int x, int y, Color color);
 
 // Compares the yMins of the given buckets parameters
 bool minYCompare (Bucket* edge1, Bucket* edge2) {
@@ -170,20 +170,39 @@ void Polygon::processEdgeTable (std::list<Bucket*> edgeTable, std::string plane)
         // Fill polygon pixels
         for (auto i = activeList.begin(); i != activeList.end(); i++) {
             b1 = **i;
-            
             std::advance(i, 1);
             b2 = **i;
             
+            Point2D edgepoint1(b1.x, scanLine);
+            Point2D edgepoint2(b2.x, scanLine);
+            
+            //calculate color for edgepoints
+            edgepoint1.color.r = ((b1.yMax - scanLine) / b1.dY ) * b1.p1.color.r + (scanLine / b1.dY) * b1.p2.color.r;
+            edgepoint1.color.g = ((b1.yMax - scanLine) / b1.dY ) * b1.p1.color.g + (scanLine / b1.dY) * b1.p2.color.g;
+            edgepoint1.color.b = ((b1.yMax - scanLine) / b1.dY ) * b1.p1.color.b + (scanLine / b1.dY) * b1.p2.color.b;
+            
+            edgepoint2.color.r = ((b2.yMax - scanLine) / b2.dY ) * b2.p1.color.r + (scanLine / b2.dY) * b2.p2.color.r;
+            edgepoint2.color.g = ((b2.yMax - scanLine) / b2.dY ) * b2.p1.color.g + (scanLine / b2.dY) * b2.p2.color.g;
+            edgepoint2.color.b = ((b2.yMax - scanLine) / b2.dY ) * b2.p1.color.b + (scanLine / b2.dY) * b2.p2.color.b;
+            
+            
             
             for (int x = b1.x; x < b2.x; x++) {
+                Point2D drawPoint(x, scanLine);
+                
+                // calculate color based on edgepoints
+                drawPoint.color.r = ((b2.x - x) / (b2.x - b1.x)) * edgepoint1.color.r + (x / (b2.x - b1.x)) * edgepoint2.color.r;
+                drawPoint.color.g = ((b2.x - x) / (b2.x - b1.x)) * edgepoint1.color.g + (x / (b2.x - b1.x)) * edgepoint2.color.g;
+                drawPoint.color.b = ((b2.x - x) / (b2.x - b1.x)) * edgepoint1.color.b + (x / (b2.x - b1.x)) * edgepoint2.color.b;
+                
                 if (plane == "xy"){
-                    setPixelXY(x, scanLine, color);
+                    setPixelXY(x, scanLine, drawPoint.color);
                 }
                 else if (plane == "yz"){
-                    setPixelYZ(x, scanLine, color);
+                    setPixelYZ(x, scanLine, drawPoint.color);
                 }
                 else if (plane == "xz"){
-                    setPixelXZ(x, scanLine, color);
+                    setPixelXZ(x, scanLine, drawPoint.color);
                 }
 
             }
