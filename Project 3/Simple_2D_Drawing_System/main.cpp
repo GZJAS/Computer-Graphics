@@ -9,12 +9,15 @@
 #include "Polygon.hpp"
 #include "threeD.hpp"
 #include "Edge.hpp"
+#include "Color.hpp"
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <vector>
 #include <sstream>
 #include <cstdlib>
+#include <map>
+
 
 #ifdef __APPLE__
 #include <GLUT/glut.h>
@@ -32,10 +35,20 @@ int PixelBufferSize;
 float *PixelBufferXY, *PixelBufferYZ, *PixelBufferXZ;
 float xmin, xmax, ymin, ymax;
 int winXY, winYZ, winXZ, MainWindow;
+std::map<std::string, Color> ColorMap = {{"red", {1, 0, 0}},
+                                        {"green", {0, 1, 0}},
+                                        {"blue", {0, 0, 1}},
+                                        {"white", {1, 1, 1}}};
+
+Point *threeD::lightsource = new Point(0, 0, 0, ColorMap["white"]);
+Point *threeD::viewsource = new Point(0, 50, 100);
+Color threeD::ambientlight = {.25, .25, .25};
+
 
 // global variable to hold all polygons
 std::vector<threeD*>all_shapes;
 std::vector<threeD*>rotate_axis;
+
 
 // function prototypes;
 void displayXY();
@@ -44,104 +57,6 @@ void displayXZ();
 void setPixelXZ(int x, int z, double c);
 void setPixelYZ(int z, int y, double c);
 void setPixelXY(int x, int y, double c);
-
-
-float findMin(){
-    std::vector<float> min;
-    
-    
-    // go through each shape and find min x, y, z
-    for (auto shape: all_shapes){
-        std::vector<Point *>::iterator xmin = std::min_element(shape->vertices.begin(), shape->vertices.end(), [](Point *p1, Point *p2){return p1->x < p2->x;});
-        std::vector<Point *>::iterator ymin = std::min_element(shape->vertices.begin(), shape->vertices.end(), [](Point *p1, Point *p2){return p1->y < p2->y;});
-        std::vector<Point *>::iterator zmin = std::min_element(shape->vertices.begin(), shape->vertices.end(), [](Point *p1, Point *p2){return p1->z < p2->z;});
-        min.push_back((*xmin)->x);
-        min.push_back((*ymin)->y);
-        min.push_back((*zmin)->z);
-    }
-    
-    // find the min out of all x, y, z
-    std::vector<float>::iterator min_itr = std::min_element(min.begin(), min.end(), [](float &x1, float &x2){return x1 < x2;});
-
-    return *min_itr;
-}
-
-float findMax(){
-    std::vector<float> max;
-    
-    
-    // go through each shape and find max x, y, z
-    for (auto shape: all_shapes){
-        std::vector<Point *>::iterator xmax = std::max_element(shape->vertices.begin(), shape->vertices.end(), [](Point *p1, Point *p2){return p1->x < p2->x;});
-        std::vector<Point *>::iterator ymax = std::max_element(shape->vertices.begin(), shape->vertices.end(), [](Point *p1, Point *p2){return p1->y < p2->y;});
-        std::vector<Point *>::iterator zmax = std::max_element(shape->vertices.begin(), shape->vertices.end(), [](Point *p1, Point *p2){return p1->z < p2->z;});
-        max.push_back((*xmax)->x);
-        max.push_back((*ymax)->y);
-        max.push_back((*zmax)->z);
-    }
-    
-    // find the max out of all x, y, z
-    std::vector<float>::iterator max_itr = std::max_element(max.begin(), max.end(), [](float &x1, float &x2){return x1 < x2;});
-    
-    return *max_itr;
-}
-
-
-
-// convert x,y coordinates to NDC for xy plane
-void NDCmapToXY(float &x, float &y){
-    float xbar, ybar, min, max;
-    
-    // find min and max
-    min = findMin();
-    max = findMax();
-    
-    // compute the new point
-    xbar = (x - min)/(max + 1 - min);
-    ybar = (y - min)/(max + 1 - min);
-
-    // find corresponding pixel
-    x = xbar * window_width/2;
-    y = ybar * window_height/2;
-    
-}
-
-// convert y,z coordinates to NDC for yz plane
-void NDCmapToYZ(float &z, float &y){
-    float zbar, ybar, min, max;
-    
-    // find min and max
-    min = findMin();
-    max = findMax();
-    
-    // compute new NDC point
-    zbar = (z - min)/(max + 1 - min);
-    ybar = (y - min)/(max + 1 - min);
-    
-    // find corresponding pixel
-    z = zbar * window_width/2;
-    y = ybar * window_height/2;
-    
-    
-}
-
-// convert x,z coordinates to NDC for xz plane
-void NDCmapToXZ(float &x, float &z){
-    float xbar, zbar, min, max;
- 
-    // find min and max
-    min = findMin();
-    max = findMax();
-    
-    // compute new NDC point
-    xbar = (x - min)/(max + 1 - min);
-    zbar = (z - min)/(max + 1 - min);
-    
-    // find corresponding pixel
-    x = xbar * window_width/2;
-    z = zbar * window_height/2;
-    
-}
 
 
 threeD *getObjectByID(int id){
@@ -167,7 +82,7 @@ std::vector<int>findPolygons(){
 
 // sets the local in pixelBuffer to c given x and y coordinates
 void setPixelYZ(int z, int y, double c){
-    int i = (z * window_width/2 + y) * 3;
+    int i = (y * window_width/2 + z) * 3;
     for(int j = 0; j < 3; j++){
         PixelBufferYZ[i + j] = c;
     }
@@ -224,150 +139,7 @@ int findEdges(threeD *shape, Point *point){
 }
 
 void interface(){
-    std::string answer;
-    std::vector<std::array<float, 2>>points;
-
-    std::cout << std::endl << "What would you like to do?" << std::endl <<
-    "\t(1) Translate" << std::endl <<
-    "\t(2) Scale" << std::endl <<
-    "\t(3) Rotate" << std::endl <<
-    "\t(4) Save to file" << std::endl <<
-    "\t(5) Exit" << std::endl;
-
-    std::cout << ">> ";
-    std::cin >> answer;
-
-    if (answer == "1"){
-        int shape_id, x, y, z;
-        
-        std::cout << "Enter the id of the shape you would like to translate: " << std::endl;
-        
-        for(auto shape: all_shapes){
-            std::cout << shape->id << std::endl;
-        }
-        
-        std::cout << ">> ";
-        std::cin >> shape_id;
-        
-        // get the shape the user specified by id
-        threeD *shape = getObjectByID(shape_id);
-        
-        // get translation parameters
-        std::cout << "How would you like to translate this shape? " << std::endl;
-        std::cout << "x = ";
-        std::cin >> x;
-        std::cout << "y = ";
-        std::cin >> y;
-        std::cout << "z = ";
-        std::cin >> z;
-        
-        // carry out transformation operation
-        shape->translate(x, y, z);
-        shape->convertToVector();
-
-
-    }
-    else if (answer == "2"){
-        int shape_id;
-        double Sx, Sy, Sz;
-
-        std::cout << "Enter the id of the shape you would like to scale: " << std::endl;
-        
-        for(auto shape: all_shapes){
-            std::cout << shape->id << std::endl;
-        }
-        
-        std::cout << ">> ";
-        std::cin >> shape_id;
-
-        // get the object the user specified
-        threeD *shape = getObjectByID(shape_id);
-
-        // get transformation parameters
-        std::cout << "How would you like to scale the shape? " << std::endl;
-        std::cout << "Sx = ";
-        std::cin >> Sx;
-        std::cout << "Sy = ";
-        std::cin >> Sy;
-        std::cout << "Sz = ";
-        std::cin >> Sz;
-
-        // carry out transformation operations
-        shape->scale(Sx, Sy, Sz);
-
-    }
-    else if (answer == "3"){
-        int shape_id;
-        double angle;
-        Point *p1 = new Point();
-        Point *p2 = new Point();
-        
-        std::cout << "Enter the id of the shape you would like to rotate: " << std::endl;
-        
-        for(auto shape: all_shapes){
-            std::cout << shape->id << std::endl;
-        }
-        
-        std::cout << ">> ";
-        std::cin >> shape_id;
-        
-        // get the object the user specified
-        threeD *shape = getObjectByID(shape_id);
-        
-        
-        std::cout << "About which edge would you like to rotate the shape?" << std::endl;
-        std::cout << "Enter the coordinate of the first point of the rotation axis separated by spaces: " << std::endl;
-        std::cin >> p1->x >> p1->y >> p1->z;
-        std::cout << "Enter the coordinate of the second point of the rotation axis separated by spaces: " << std::endl;
-        std::cin >> p2->x >> p2->y >> p2->z;
-        std::cout << "Enter the angle you wish to rotate the shape by: " << std::endl;
-        std::cout << "angle = ";
-        std::cin >> angle;
-        
-        // create rotation axis
-        Edge *edge = new Edge();
-        edge->p1 = p1;
-        edge->p2 = p2;
-        Line  *line = new Line(edge);
-        line->color = 0.5;
-        
-        // carry out rotate operation
-        shape->rotate(edge, angle);
-    }
-    else if (answer == "4"){
-        std::ofstream outputFile("file.txt", std::ios::out);
-
-        // exit program if unable to create file
-        if(!outputFile){
-            std::cerr << "File could not be opened" << std::endl;
-        }
-        
-        
-        for(auto shape : all_shapes){
-            outputFile << shape->vertices.size() << std::endl;
-            for(auto point : shape->vertices){
-                outputFile << point->x << " " << point->y << " " << point->z << std::endl;
-            }
-            outputFile << shape->edges.size() << std::endl;
-            for(auto edge: shape->edges){
-                outputFile << findEdges(shape, edge->p1) << " " << findEdges(shape, edge->p2) << std::endl;
-                
-            }
-            outputFile << std::endl;
-        }
-
-    }
-    else if (answer == "5"){
-        exit(0);
-    }
-    else if (answer == "6"){
-        return;
-    }
-    else {
-        std::cout << "Invalid answer. Please try again" << std::endl << std::endl;
-        interface();
-    }
-
+    return;
 }
 
 // main display loop, this function will be called again and again by OpenGL
@@ -375,9 +147,10 @@ void displayXY(){
     glClear(GL_COLOR_BUFFER_BIT);
     glLoadIdentity();
     
-    clearXYPixels();
     
     for(auto i : all_shapes){
+        i->findCentroid();
+        std::sort(all_shapes.begin(), all_shapes.end(), [](threeD *shape1, threeD *shape2){return shape1->centroid.z > shape2->centroid.z;});
         i->drawXY();
     }
     
@@ -399,6 +172,8 @@ void displayYZ(){
     clearYZPixels();
     
     for(auto i : all_shapes){
+        i->findCentroid();
+        std::sort(all_shapes.begin(), all_shapes.end(), [](threeD *shape1, threeD *shape2){return shape1->centroid.x > shape2->centroid.x;});
         i->drawYZ();
 
     }
@@ -419,11 +194,14 @@ void displayXZ(){
     
     clearXZPixels();
     
-    if(display_count){
-        interface();
-    }
+//    if(display_count){
+//        interface();
+//    }
     
     for (auto i: all_shapes){
+        i->findCentroid();
+        std::sort(all_shapes.begin(), all_shapes.end(), [](threeD *shape1, threeD *shape2){return shape1->centroid.y > shape2->centroid.y;});
+
         i->drawXZ();
     }
 
@@ -438,7 +216,6 @@ void displayXZ(){
 }
 
 void display(){
-    cout << "MAIN DISPLAY" << endl;
     glutSetWindow(MainWindow);
     glClear(GL_COLOR_BUFFER_BIT);
     
@@ -450,7 +227,7 @@ int main(int argc, char *argv[]){
     window_height = std::atoi(argv[2]);
     PixelBufferSize = window_width * window_height * 3;
     
-    int numPoints, numEdges;
+    int numPoints, numFaces;
     std::string chars;
     
     std::ifstream inputFile("file.txt", std::ios::in);
@@ -461,7 +238,8 @@ int main(int argc, char *argv[]){
     }
     
     std::vector<Point *>points;
-    std::vector<Edge *>edges;
+    std::vector<Point *>normals;
+    std::vector<Polygon *>faces;
     
     // read in file
     while(!inputFile.eof()){
@@ -470,12 +248,15 @@ int main(int argc, char *argv[]){
         numPoints = atoi(chars.c_str());
         
         points.clear();
-        edges.clear();
+        normals.clear();
+        faces.clear();
+        
         
         if(chars == ""){
             break;
         }
         
+        // get vertices
         for(int i = 0; i < numPoints; i++){
             getline(inputFile, chars);
             std::stringstream iss;
@@ -491,25 +272,60 @@ int main(int argc, char *argv[]){
         
         threeD *newShape = new threeD(points);
         
-        // get edges
-        getline(inputFile, chars);
-        numEdges = atoi(chars.c_str());
-        
-        for(int i = 0; i < numEdges; i++){
+        // get normal vectors for each vertex
+        for(int i = 0; i < numPoints; i++){
             getline(inputFile, chars);
             std::stringstream iss;
             iss.str(chars);
-            std::string point1, point2;
-            iss >> point1 >> point2;
-            int p1 = atoi(point1.c_str());
-            int p2 = atoi(point2.c_str());
-            Edge *newEdge = new Edge();
-            newEdge->p1 = &(*newShape->vertices.at(p1));
-            newEdge->p2 = &(*newShape->vertices.at(p2));
-            edges.push_back(newEdge);
-            
+            std::string val1, val2, val3;
+            iss >> val1 >> val2 >> val3;
+            Point *normalvec = new Point();
+            normalvec->x = std::stof(val1);
+            normalvec->y = std::stof(val2);
+            normalvec->z = std::stof(val3);
+            normals.push_back(normalvec);
         }
-        newShape->edges = edges;
+        
+        newShape->normals = normals;
+        
+        
+        // get faces
+        getline(inputFile, chars);
+        numFaces = atoi(chars.c_str());
+        
+        for(int i = 0; i < numFaces; i++){
+            getline(inputFile, chars);
+            std::stringstream iss(chars);
+            int index;
+            std::vector<Point *>vertices;
+            while(iss >> index){
+                vertices.push_back(&(*newShape->vertices.at(index)));
+            }
+            Polygon *poly = new Polygon(vertices);
+            newShape->faces.push_back(poly);
+        }
+        
+        // get shape color
+        getline(inputFile, chars);
+        newShape->color = ColorMap[chars];
+        
+        // ka
+        getline(inputFile, chars);
+        newShape->ka = std::stof(chars);
+        
+        // kd
+        getline(inputFile, chars);
+        newShape->kd = std::stof(chars);
+        
+        // ks
+        getline(inputFile, chars);
+        newShape->ks = std::stof(chars);
+        
+        // ns
+        getline(inputFile, chars);
+        newShape->ns = std::stof(chars);
+        
+        
         all_shapes.push_back(newShape);
         
         getline(inputFile, chars);

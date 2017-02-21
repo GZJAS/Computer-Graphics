@@ -11,6 +11,7 @@
 
 #include "Geometry.hpp"
 #include "Line.hpp"
+#include "Point2D.hpp"
 #include <stdio.h>
 #include <vector>
 #include <list>
@@ -20,28 +21,20 @@
 // Polygon class
 class Polygon : public Geometry {
 public:
-    /* data members */
-    std::vector<int> xc;
-    std::vector<int> yc;
-    std::vector<Point *>results;
-    std::vector<Point *>tmp;
-    bool unchanged = false;
+    /* data member */
+    Point centroid;
+    std::vector<Point *> points;
     
     /* member functions */
     // constructor
-    Polygon(std::vector<std::array<float, 2>> points);
-    void draw();
-    void updateParameters();
-    std::list<Bucket*> createEdges();
-    void processEdgeTable (std::list<Bucket*> edgeTable);
-    void drawPolygon();
-    void drawOutlines();
-    void clipLeft(Point *p1, Point *p2);
-    void clipTop(Point *p1, Point *p2);
-    void clipRight(Point *p1, Point *p2);
-    void clipBottom(Point *p1, Point *p2);
-    int clip();
+    Polygon(std::vector<Point *> pts);
+    void findCentroid();
+    std::list<Bucket*> createEdges(std::string plane);
+    void processEdgeTable (std::list<Bucket*>, std::string plane);
     
+    
+    void drawPolygon(std::string plane);
+    void drawOutlines();
     
 }; // end class definition
 

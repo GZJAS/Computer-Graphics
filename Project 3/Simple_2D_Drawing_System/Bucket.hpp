@@ -8,6 +8,7 @@
 
 #ifndef Vertex_h
 #define Vertex_h
+#include "Point2D.hpp"
 /*
  Bucket struct to hold edge information
  */
@@ -19,6 +20,9 @@ struct Bucket {
     int dX;         // The absolute delta x b/w edge's vertex points
     int dY;         // The absolute delta y b/w edge's vertex points
     double sum;     // Initiated to 0. Used as the scan lines are being filled to x to the next position
+    Point2D p1;
+    Point2D p2;
+    
 };
 
 #endif /* Vertex_h */

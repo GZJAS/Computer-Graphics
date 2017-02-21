@@ -10,6 +10,8 @@
 
 extern float xmin, xmax, ymin, ymax;
 void setPixelXY(int x, int y, double c);
+void setPixelYZ(int x, int y, double c);
+void setPixelXZ(int x, int y, double c);
 
 // Compares the yMins of the given buckets parameters
 bool minYCompare (Bucket* edge1, Bucket* edge2) {
@@ -28,68 +30,84 @@ bool xCompare (Bucket* edge1, Bucket* edge2) {
 }
 
 // constructor
-Polygon::Polygon(std::vector<std::array<float, 2>> points){
-    for(auto it = points.begin(); it != points.end(); it++){
-        Point *pt = new Point();
-        pt->x = (*it)[0];
-        pt->y = (*it)[1];
-        vertices.push_back(pt);
-        xc.push_back((*it)[0]);
-        yc.push_back((*it)[1]);
-        
-    }
-    n = (int)vertices.size();
-    id = global_id++;
-    name = "Polygon";
+Polygon::Polygon(std::vector<Point *> pts){
+    points = pts;
+}
+
+
+// find centroid of Polygon
+void Polygon::findCentroid(){
+    double sumx = 0, sumy = 0, sumz = 0;
     
-}
-
-void Polygon::draw() {
-    Polygon::drawPolygon();
-}
-
-void Polygon::updateParameters() {
-    xc.clear();
-    yc.clear();
-    for(auto it = vertices.begin(); it != vertices.end(); it++){
-        xc.push_back((*it)->x);
-        yc.push_back((*it)->y);
+    for (auto i : points){
+        sumx += i->x;
+        sumy += i->y;
+        sumz += i->z;
     }
-    n = (int)vertices.size();
+    
+    centroid.x = sumx/points.size();
+    centroid.y = sumy/points.size();
+    centroid.z = sumz/points.size();
 }
+
 
 // creates edge buckets from the given edges
-std::list<Bucket*> Polygon::createEdges () {
-    int startIndex = n - 1;
+std::list<Bucket*> Polygon::createEdges (std::string plane) {
+    int startIndex = (int)points.size() - 1;
     int yMax;
     int yMin;
     int initialX;
     int sign;
     int dX;
     int dY;
-    Point v1;
-    Point v2;
-    Point tmp;
     
+    Point2D v1;
+    Point2D v2;
+    Point2D tmp;
+
     std::list<Bucket*> edgeTable;   // list that contains all of the edges that make up the figure
     
     // Create the edge buckets and place in tempEdgeTable
-    for (int i = 0; i < n; i++) {
-        v1 = { static_cast<float>(xc[startIndex]), static_cast<float>(yc[startIndex]) };
-        v2 = { static_cast<float>(xc[i]), static_cast<float>(yc[i]) };
+    for (int i = 0; i < points.size(); i++) {
+        if (plane == "xy"){
+            v1.a = points.at(startIndex)->x;
+            v1.b = points.at(startIndex)->y;
+            v1.color = points.at(startIndex)->color;
+            v2.a = points.at(i)->x;
+            v2.b = points.at(i)->y;
+            v2.color = points.at(i)->color;
+
+        }
+        else if (plane == "yz"){
+            v1.a = points.at(startIndex)->z;
+            v1.b = points.at(startIndex)->y;
+            v1.color = points.at(startIndex)->color;
+            v2.a = points.at(i)->z;
+            v2.b = points.at(i)->y;
+            v2.color = points.at(i)->color;
+            
+        }
+        else if(plane == "xz"){
+            v1.a = points.at(startIndex)->x;
+            v1.b = points.at(startIndex)->z;
+            v1.color = points.at(startIndex)->color;
+            v2.a = points.at(i)->x;
+            v2.b = points.at(i)->z;
+            v2.color = points.at(i)->color;
+        }
         
-        // Check and swap vertices if not in left to right order
-        if (v2.x < v1.x) {
+        // Check and swap vertices if not in left t o right order
+        if (v2.a < v1.a) {
             tmp = v1;
             v1 = v2;
             v2 = tmp;
         }
-        yMax = (v1.y > v2.y) ? v1.y : v2.y;
-        yMin = (v1.y < v2.y) ? v1.y : v2.y;
-        initialX = (v1.y < v2.y) ? v1.x : v2.x;
-        sign = ((v2.y - v1.y) < 0) ? -1 : 1;
-        dX = abs(v2.x - v1.x);
-        dY = abs(v2.y - v1.y);
+        yMax = (v1.b > v2.b) ? v1.b : v2.b;
+        yMin = (v1.b < v2.b) ? v1.b : v2.b;
+        initialX = (v1.b < v2.b) ? v1.a : v2.a;
+        sign = ((v2.b - v1.b) < 0) ? -1 : 1;
+        dX = abs(v2.a - v1.a);
+        dY = abs(v2.b - v1.b);
         
         if (dY != 0) {
             Bucket *freshBucket = new Bucket;
@@ -101,7 +119,9 @@ std::list<Bucket*> Polygon::createEdges () {
                 sign,
                 dX,
                 dY,
-                0
+                0,
+                v1,
+                v2
             };
             
             
@@ -113,7 +133,7 @@ std::list<Bucket*> Polygon::createEdges () {
 }
 
 // Given the edge table of the polygon, fill the polygons
-void Polygon::processEdgeTable (std::list<Bucket*> edgeTable) {
+void Polygon::processEdgeTable (std::list<Bucket*> edgeTable, std::string plane) {
     int scanLine = edgeTable.front()->yMin;
     Bucket b1;
     Bucket b2;
@@ -150,11 +170,22 @@ void Polygon::processEdgeTable (std::list<Bucket*> edgeTable) {
         // Fill polygon pixels
         for (auto i = activeList.begin(); i != activeList.end(); i++) {
             b1 = **i;
+            
             std::advance(i, 1);
             b2 = **i;
             
+            
             for (int x = b1.x; x < b2.x; x++) {
-                setPixelXY(x, scanLine, color);
+                if (plane == "xy"){
+                    setPixelXY(x, scanLine, color);
+                }
+                else if (plane == "yz"){
+                    setPixelYZ(x, scanLine, color);
+                }
+                else if (plane == "xz"){
+                    setPixelXZ(x, scanLine, color);
+                }
+
             }
         }
         
@@ -178,15 +209,16 @@ void Polygon::processEdgeTable (std::list<Bucket*> edgeTable) {
 }
 
 // Draw a filled polygon
-void Polygon::drawPolygon() {
+void Polygon::drawPolygon(std::string plane) {
+    
     // Create Edge Table
-    std::list<Bucket*> finalEdgeTable = createEdges();
+    std::list<Bucket*> finalEdgeTable = createEdges(plane);
     
     // Sort edges by minY
     finalEdgeTable.sort(minYCompare);
     
     // Process Edge Table and draw Polygon
-    processEdgeTable(finalEdgeTable);
+    processEdgeTable(finalEdgeTable, plane);
 }
 
 // Draw outline of polygon
@@ -208,235 +240,5 @@ void Polygon::drawOutlines(){
     float y2 = vertices[vertices.size()-1]->y;
     Line line(x1, y1, x2, y2, 0, 0);
     line.lineDDA(x1, y1, x2, y2, "xy");
-}
-
-
-void Polygon::clipLeft(Point *p1, Point *p2){
-    float dy = p2->y - p1->y;
-    float dx = p2->x - p1->x;
-    float m;
-    if(fabs(dx) > 0)
-        m = dy/dx;
-    else
-        m = 100000;
-    Point *intr = new Point();
-    intr->x = xmin;
-    intr->y = round(m * (xmin - p1->x) + p1->y);
-    
-    // in to in
-    if(p1->x >= xmin && p2->x >= xmin){
-        tmp.push_back(p2);
-    }
-    
-    // out to in
-    else if(p1->x < xmin && p2->x >= xmin){
-        tmp.push_back(intr);
-        tmp.push_back(p2);
-    }
-    
-    // in to out
-    else if(p1->x >= xmin && p2->x < xmin){
-        tmp.push_back(intr);
-    }
-    
-    // out to out
-    // nothing was changed
-    
-}
-
-void Polygon::clipTop(Point *p1, Point *p2){
-    float dy = p2->y - p1->y;
-    float dx = p2->x - p1->x;
-    float m;
-    if(fabs(dx) > 0)
-        m = dy/dx;
-    else
-        m = 100000;
-    Point *intr = new Point();
-    intr->y = ymax;
-    intr->x = round((1/m) * (ymax - p1->y) + p1->x);
-    
-    
-    // in to in
-    if(p1->y <= ymax && p2->y <= ymax){
-        tmp.push_back(p2);
-    }
-    
-    // out to in
-    else if(p1->y > ymax && p2->y <= ymax){
-        tmp.push_back(intr);
-        tmp.push_back(p2);
-    }
-    
-    // in to out
-    else if(p1->y <= ymax && p2->y > ymax){
-        tmp.push_back(intr);
-    }
-    
-    // out to out
-    // nothing was changed
-}
-
-void Polygon::clipRight(Point *p1, Point *p2){
-    float dy = p2->y - p1->y;
-    float dx = p2->x - p1->x;
-    float m;
-    if(fabs(dx) > 0)
-        m = dy/dx;
-    else
-        m = 100000;
-    Point *intr = new Point();
-    intr->x = xmax;
-    intr->y = round(m * (xmax - p1->x) + p1->y);
-    
-    // in to in
-    if(p1->x <= xmax && p2->x <= xmax){
-        tmp.push_back(p2);
-    }
-    
-    // out to in
-    else if(p1->x > xmax && p2->x <= xmax){
-        tmp.push_back(intr);
-        tmp.push_back(p2);
-    }
-    
-    // in to out
-    else if(p1->x <= xmax && p2->x > xmax){
-        tmp.push_back(intr);
-    }
-    
-    // out to out
-    // nothing was changed
-    
-    
-    
-}
-
-void Polygon::clipBottom(Point *p1, Point *p2){
-    float dy = p2->y - p1->y;
-    float dx = p2->x - p1->x;
-    float m;
-    if(fabs(dx) > 0)
-        m = dy/dx;
-    else
-        m = 100000;
-    Point *intr = new Point();
-    intr->y = ymin;
-    intr->x = round((1/m) * (ymin - p1->y) + p1->x);
-    
-    // in to in
-    if(p1->y >= ymin && p2->y >= ymin){
-        tmp.push_back(p2);
-    }
-    
-    // out to in
-    else if(p1->y < ymin && p2->y >= ymin){
-        tmp.push_back(intr);
-        tmp.push_back(p2);
-    }
-    
-    // in to out
-    else if(p1->y >= ymin && p2->y < ymin){
-        tmp.push_back(intr);
-    }
-    
-    // out to out
-    // do nothing
-    
-}
-
-int Polygon::clip() {
-    results.clear();
-    tmp.clear();
-    unchanged = false;
-    
-    Point *p1;
-    Point *p2;
-    
-    results = vertices;
-    
-    // clip with respect to Left edge
-    for(int i = 0; i < results.size() - 1; i++){
-        p1 = results[i];
-        p2 = results[i+1];
-        clipLeft(p1, p2);
-    }
-    p1 = results[results.size() - 1];
-    p2 = results[0];
-    clipLeft(p1, p2);
-    
-    
-    if (!tmp.empty()){
-        results = tmp;
-        tmp.clear();
-    }
-    else {
-        return -1;
-    }
-    
-    // clip with respect to Top edge
-    for(int i = 0; i < results.size() - 1; i++){
-        p1 = results[i];
-        p2 = results[i+1];
-        clipTop(p1, p2);
-    }
-    p1 = results[results.size() - 1];
-    p2 = results[0];
-    clipTop(p1, p2);
-    
-    
-    if (!tmp.empty()){
-        results = tmp;
-        tmp.clear();
-    }
-    else {
-        return -1;
-    }
-    
-    // clip with respect to Right edge
-    for(int i = 0; i < results.size() - 1; i++){
-        p1 = results[i];
-        p2 = results[i+1];
-        clipRight(p1, p2);
-    }
-    p1 = results[results.size() - 1];
-    p2 = results[0];
-    clipRight(p1, p2);
-    
-    
-    
-    if (!tmp.empty()){
-        results = tmp;
-        tmp.clear();
-    }
-    else {
-        return -1;
-    }
-    
-    // clip with respect to Bottom edge
-    for(int i = 0; i < results.size() - 1; i++){
-        p1 = results[i];
-        p2 = results[i+1];
-        clipBottom(p1, p2);
-    }
-    p1 = results[results.size() - 1];
-    p2 = results[0];
-    clipBottom(p1, p2);
-    
-    if(!tmp.empty()){
-        results = tmp;
-    }
-    else {
-        return -1;
-    }
-    
-    
-    if(!results.empty()){
-        vertices.clear();
-        vertices = results;
-        updateParameters();
-        return 1;
-    }
-    return -1;
 }
 

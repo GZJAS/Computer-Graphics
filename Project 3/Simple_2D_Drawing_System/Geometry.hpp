@@ -26,22 +26,17 @@ public:
     std::vector<Point *> vertices;
     std::vector<std::vector<double>> matrix;
     std::string name;
-    Point centroid;
-    int n, id;
+    int id;
     double color = 1.0;
+    Point centroid;
     
+    
+    void findCentroid();
     
     // convert vertices vector into matrix (vector of vectors)
     void convertToMatrix();
-    void convertToVector();
-    void findCentroid();
+    float dotProduct(Point p1, Point p2);
     std::vector<std::vector<double>> matrixMultiply(std::vector<std::vector<double>> matrixA, std::vector<std::vector<double>> matrixB);
-    std::vector<std::vector<double>> create_rot_matrix(Edge *rotaxis, double angle);
-    std::vector<std::vector<double>> create_scale_matrix(double Sx, double Sy, double Sz);
-    std::vector<std::vector<double>> create_trans_matrix(double x, double y, double z);
-    void translate(double x, double y, double z);
-    void rotate(Edge *rotaxis, double angle);
-    void scale(double Sx, double Sy, double Sz);
 };
 
 #endif /* Geometry_hpp */

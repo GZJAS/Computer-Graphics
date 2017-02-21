@@ -22,7 +22,6 @@ Line::Line(Edge *edge){
     this->x2 = &edge->p2->x;
     this->y2 = &edge->p2->y;
     this->z2 = &edge->p2->z;
-    n = 2;
     name = "Line";
 }
 
@@ -33,7 +32,6 @@ Line::Line(float x1, float y1, float x2, float y2, float z1, float z2){
     *this->x2 = x2;
     *this->y2 = y2;
     *this->z2 = z2;
-    n = 2;
     name = "Line";
 }
 
