@@ -8,111 +8,45 @@
 
 #include "threeD.hpp"
 
+extern Point lightsource;
+extern Point viewsource;
+extern Color ambientIntensity;
+extern Color lightIntensity;
+extern float bigK;
 void NDCmapToXY(float &x, float &y);
 void NDCmapToYZ(float &z, float &y);
 void NDCmapToXZ(float &x, float &z);
-
+using namespace std;
 threeD::threeD(std::vector<Point *>points){
     vertices = points;
     id = global_id++;
-    convertToMatrix();
 }
 
 
 void threeD::Phong(){
+
     
     for(int i = 0; i < vertices.size(); i++){
+        Point p = *vertices[i];
+        Point n = *normals[i];
+        Point l = normalize(lightsource - p);
+        Point v = normalize(viewsource - p);
+        Point r = normalize(n * dotProduct(n, l) * 2 - l);
         
-        Point H;
-        H.x = lightsource->x + viewsource->x;
-        H.y = lightsource->y + viewsource->y;
-        H.z = lightsource->z + viewsource->z;
-        float magnitude = sqrt(pow(H.x, 2) + pow(H.y, 2) + pow(H.z, 2));
         
-        H.x /= magnitude;
-        H.y /= magnitude;
-        H.z /= magnitude;
-        
-        // Phong formula = ka*Ia + kd*IL*(N . L) + ks*IL*(N . H)^ns
-        // red
-        float ambient_color = ka * ambientlight.r;
-        float diffuse_color = kd * lightsource->color.r * dotProduct(*normals[i], *lightsource);
-        float specular_color = ks * lightsource->color.r * pow(dotProduct(*normals[i], H), ns);
-        
-        vertices[i]->color.r = ambient_color + diffuse_color + specular_color;
-        
-        // green
-        ambient_color = ka * ambientlight.g;
-        diffuse_color = kd * lightsource->color.g * dotProduct(*normals[0], *lightsource);
-        specular_color = ks * lightsource->color.g * pow(dotProduct(*normals[i], H), ns);
-        
-        vertices[i]->color.g = ambient_color + diffuse_color + specular_color;
-
-        // blue
-        ambient_color = ka * ambientlight.b;
-        diffuse_color = kd * lightsource->color.b * dotProduct(*normals[0], *lightsource);
-        specular_color = ks * lightsource->color.b * pow(dotProduct(*normals[i], H), ns);
-        
-        vertices[i]->color.b = ambient_color + diffuse_color + specular_color;
-        
+        Color amb_color = ka * ambientIntensity;
+        float dotln = (dotProduct(l, n) < 0) ? 0 : dotProduct(l, n);
+        float dotrv = (dotProduct(r, v) < 0) ? 0 : dotProduct(r, v);
+        Color diff_color = (lightIntensity / (length(viewsource - p) + bigK)) * (kd * dotln);
+        Color spec_color = (lightIntensity / (length(viewsource - p) + bigK)) * (ks * pow(dotrv, ns));
+        Color color = amb_color + diff_color + spec_color;
+        vertices[i]->color = color;
     }
 
-
-}
-
-// remove those polygons whose projection onto a plane results in a line
-bool threeD::NotJustALine(Polygon *polygon, std::string plane){
-    std::set<Point2D> unique2DPoints;
-    
-    if(plane == "xy"){
-        
-        // copy x and y values into vector of Point2D
-        for(auto i : polygon->points){
-            const Point2D point2D = Point2D(i->x, i->y);
-            unique2DPoints.insert(point2D);
-        }
-           
-        // if the size of the two containers are not the same, at least one 2D point is a duplicate, so the plane must be a line
-        if(unique2DPoints.size() != polygon->points.size()){
-            return false;
-        }
-    }
-    else if(plane == "yz"){
-        // copy y and z values into vector of Point2D
-        for(auto point : polygon->points){
-            const Point2D point2D = Point2D(point->z, point->y);
-            unique2DPoints.insert(point2D);
-        }
-
-        // if the size of the two containers are not the same, at least one 2D point is a duplicate, so the plane must be a line
-        if(unique2DPoints.size() != polygon->points.size()){
-            return false;
-        }
-    }
-    else if(plane == "xz"){
-        // copy x and z values into vector of Point2D
-        for(auto point : polygon->points){
-            const Point2D point2D = Point2D(point->x, point->z);
-            unique2DPoints.insert(point2D);
-        }
-
-        // if the size of the two containers are not the same, at least one 2D point is a duplicate, so the plane must be a line
-        if(unique2DPoints.size() != polygon->points.size()){
-            return false;
-        }
-    }
-    
-    return true;
 }
 
 // project onto xy plane
 void threeD::drawXY(){
-  
-    Phong();
-    
-    for(auto face: faces){
-            face->findCentroid();
-    }
     
     // sort faces by z centroid coordinate in decreasing order
     std::sort(faces.begin(), faces.end(), [](Polygon *poly1, Polygon *poly2){return poly1->centroid.z > poly2->centroid.z;});
@@ -126,12 +60,6 @@ void threeD::drawXY(){
 
 // project onto yz plane
 void threeD::drawYZ(){
-   
-    Phong();
-    
-    for(auto face: faces){
-        face->findCentroid();
-    }
     
     // sort faces by x centroid coordinate in decreasing order
     std::sort(faces.begin(), faces.end(), [](Polygon *poly1, Polygon *poly2){return poly1->centroid.x > poly2->centroid.x;});
@@ -140,17 +68,12 @@ void threeD::drawYZ(){
         if (NotJustALine(face, "yz"))
             face->drawPolygon("yz");
     }
-
-
+    
+    
 }
 
 // project onto xz plane
 void threeD::drawXZ(){
-    Phong();
-    
-    for(auto face: faces){
-        face->findCentroid();
-    }
     
     // sort faces by y centroid coordinate in decreasing order
     std::sort(faces.begin(), faces.end(), [](Polygon *poly1, Polygon *poly2){return poly1->centroid.y > poly2->centroid.y;});
@@ -159,7 +82,69 @@ void threeD::drawXZ(){
         if (NotJustALine(face, "xz"))
             face->drawPolygon("xz");
     }
-
+    
 }
 
+
+// remove those polygons whose projection onto a plane results in a line
+bool threeD::NotJustALine(Polygon *polygon, std::string plane){
+    std::set<Point2D> unique2DPoints;
+    std::set<Point2D> unique1;
+    std::set<Point2D> unique2;
+    
+    if(plane == "xy"){
+        
+        // copy x and y values into vector of Point2D
+        for(auto point: polygon->points){
+            Point2D pt1, pt2;
+            pt1.a = point->x;
+            pt2.a = point->y;
+            unique1.insert(pt1);
+            unique2.insert(pt2);
+            
+            
+        }
+        
+        
+        if(unique1.size() == 1 || unique2.size() == 1){
+            return false;
+        }
+
+    }
+    else if(plane == "yz"){
+        // copy y and z values into vector of Point2D
+        for(auto point : polygon->points){
+            Point2D pt1, pt2;
+            pt1.a = point->z;
+            pt2.a = point->y;
+            unique1.insert(pt1);
+            unique2.insert(pt2);
+            
+        
+        }
+
+        if(unique1.size() == 1 || unique2.size() == 1){
+            return false;
+        }
+        
+    }
+    else if(plane == "xz"){
+        // copy x and z values into vector of Point2D
+        for(auto point : polygon->points){
+            Point2D pt1, pt2;
+            pt1.a = point->x;
+            pt2.a = point->z;
+            unique1.insert(pt1);
+            unique2.insert(pt2);
+            
+        }
+
+        
+        if(unique1.size() == 1 || unique2.size() == 1){
+            return false;
+        }
+
+    }
+    return true;
+}
 

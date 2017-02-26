@@ -30,12 +30,12 @@ public:
     Point centroid;
     
     
+    static float length(Point p);
     void findCentroid();
-    
-    // convert vertices vector into matrix (vector of vectors)
-    void convertToMatrix();
     float dotProduct(Point p1, Point p2);
-    std::vector<std::vector<double>> matrixMultiply(std::vector<std::vector<double>> matrixA, std::vector<std::vector<double>> matrixB);
+    Point crossProduct(Point p1, Point p2);
+    Point normalize(const Point &p);
+
 };
 
 #endif /* Geometry_hpp */

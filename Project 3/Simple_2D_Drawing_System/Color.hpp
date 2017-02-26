@@ -8,6 +8,7 @@
 
 #ifndef Color_h
 #define Color_h
+#include <iostream>
 struct Color {
     float r;
     float g;
@@ -19,9 +20,76 @@ struct Color {
     
     Color(){}
     
-    float getAverage(Color color){
-        return color.r + color.g + color.b / 3;
+    void print(){
+        std::cout << "color = " << r << "," << g << "," << b << std::endl;
     }
+    
+    
+    void setColor(float c){
+        this->r = c;
+        this->g = c;
+        this->b = c;
+    }
+    
+    void setColor(float r, float g, float b){
+        this->r = r;
+        this->g = g;
+        this->b = b;
+    }
+    
+    float getAverage(){
+        return r + g + b / 3;
+    }
+
+    
+    Color operator*(const float &c){
+        Color newColor;
+        newColor.r = this->r * c;
+        newColor.g = this->g * c;
+        newColor.b = this->b * c;
+        
+        return newColor;
+    }
+    
+    Color operator*(const Color &c){
+        Color newColor;
+        newColor.r = this->r * c.r;
+        newColor.g = this->g * c.g;
+        newColor.b = this->b * c.b;
+        
+        return newColor;
+    }
+    
+    Color operator/(const float &c){
+        Color newColor;
+        newColor.r = this->r / c;
+        newColor.g = this->g / c;
+        newColor.b = this->b / c;
+        return newColor;
+    }
+    
+    Color operator+(const Color &color){
+        Color newColor;
+        newColor.r = this->r + color.r;
+        newColor.g = this->g + color.g;
+        newColor.b = this->b + color.b;
+        return newColor;
+    }
+    
+    bool operator<(const float &c){
+        if (this->r < c){
+            return true;
+        }
+        if (this->g < c){
+            return true;
+        }
+        if (this->b < c){
+            return true;
+        }
+        return false;
+    }
+    
+    
 };
 
 

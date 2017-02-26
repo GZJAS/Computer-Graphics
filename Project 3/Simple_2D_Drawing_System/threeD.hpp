@@ -10,6 +10,7 @@
 #define threeD_hpp
 
 
+
 #include "Geometry.hpp"
 #include "Line.hpp"
 #include "Polygon.hpp"
@@ -24,13 +25,9 @@ public:
     std::vector<Polygon *> faces;
     std::vector<Point *> normals;
     
-    static Point *lightsource;
-    static Point *viewsource;
-    static Color ambientlight;
+    Color ka, kd, ks;
+    float ns;
     
-    float ka, kd, ks, ns;
-    
-    Color color;
     
     threeD(std::vector<Point *>);
 

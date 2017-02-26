@@ -9,28 +9,6 @@
 #include "Geometry.hpp"
 
 
-// convert vertices vector into matrix (vector of vectors)
-void Geometry::convertToMatrix(){
-    std::vector<double>x_row;
-    std::vector<double>y_row;
-    std::vector<double >z_row;
-    for(auto vertex : vertices){
-        x_row.push_back(vertex->x);
-        y_row.push_back(vertex->y);
-        z_row.push_back(vertex->z);
-    }
-    
-    std::vector<double >bottom_row;
-    for(int i = 0; i < vertices.size(); i++){
-        bottom_row.push_back(1);
-    }
-    
-    matrix.push_back(x_row);
-    matrix.push_back(y_row);
-    matrix.push_back(z_row);
-    matrix.push_back(bottom_row);
-}
-
 // dot product on two vectors (represented as points)
 float Geometry::dotProduct(Point p1, Point p2){
     float sum = 0;
@@ -39,6 +17,30 @@ float Geometry::dotProduct(Point p1, Point p2){
     sum += p1.z * p2.z;
     return sum;
 }
+
+Point Geometry::normalize(const Point &p){
+    Point newpoint;
+    float magnitude = length(p);
+    newpoint.x = p.x / magnitude;
+    newpoint.y = p.y / magnitude;
+    newpoint.z = p.z / magnitude;
+    return newpoint;
+}
+
+// cross product of two vectors
+Point Geometry::crossProduct(Point p1, Point p2){
+    // a x b = <a2b3 - a3b2, a3b1 - a1b3, a1b2 - a2b1>
+    Point newpoint;
+    newpoint.x = p1.y * p2.z - p1.z * p2.y;
+    newpoint.y = p1.z * p2.x - p1.x * p2.z;
+    newpoint.z = p1.x * p2.y - p1.y * p2.x;
+    return newpoint;
+}
+
+float Geometry::length(Point p){
+    return sqrt(pow(p.x, 2) + pow(p.y, 2) + pow(p.z, 2));
+}
+
 
 // find centroid of Shape
 void Geometry::findCentroid(){
@@ -54,34 +56,5 @@ void Geometry::findCentroid(){
     centroid.y = sumy/vertices.size();
     centroid.z = sumz/vertices.size();
 }
-
-// multiply two matrices together
-std::vector<std::vector<double>> Geometry::matrixMultiply(std::vector<std::vector<double>> matrixA, std::vector<std::vector<double>> matrixB){
-    
-    std::vector<std::vector<double>> matrixC;
-    int r1 = (int)matrixA.size();
-    int c1 = (int)matrixA[0].size();
-    int c2 = (int)matrixB[0].size();
-    
-    std::vector<double>row;
-    
-    for(int i = 0; i < r1; i++){
-        row.push_back(0);
-    }
-    for(int i = 0; i < matrixA.size(); i++){
-        matrixC.push_back(row);
-    }
-    
-    for(int i = 0; i < r1; i++){
-        for (int j = 0; j < c2; j++){
-            for(int k = 0; k < c1; k++){
-                matrixC.at(i).at(j) += matrixA.at(i).at(k) * matrixB.at(k).at(j);
-            }
-        }
-    }
-    
-    return matrixC;
-}
-
 
 
