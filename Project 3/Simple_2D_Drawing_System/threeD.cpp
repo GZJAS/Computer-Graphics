@@ -28,7 +28,7 @@ void threeD::Phong(){
     
     for(int i = 0; i < vertices.size(); i++){
         Point p = *vertices[i];
-        Point n = *normals[i];
+        Point n = normalize(*normals[i]);
         Point l = normalize(lightsource - p);
         Point v = normalize(viewsource - p);
         Point r = normalize(n * dotProduct(n, l) * 2 - l);
@@ -37,8 +37,8 @@ void threeD::Phong(){
         Color amb_color = ka * ambientIntensity;
         float dotln = (dotProduct(l, n) < 0) ? 0 : dotProduct(l, n);
         float dotrv = (dotProduct(r, v) < 0) ? 0 : dotProduct(r, v);
-        Color diff_color = (lightIntensity / (length(viewsource - p) + bigK)) * (kd * dotln);
-        Color spec_color = (lightIntensity / (length(viewsource - p) + bigK)) * (ks * pow(dotrv, ns));
+        Color diff_color = (lightIntensity / (length(viewsource - p))) * (kd * dotln);
+        Color spec_color = (lightIntensity / (length(viewsource - p))) * (ks * pow(dotrv, ns));
         Color color = amb_color + diff_color + spec_color;
         vertices[i]->color = color;
     }
