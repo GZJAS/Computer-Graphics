@@ -25,4 +25,4 @@ clean:
 	rm -rf *.out *.o
 
 tar: 
-	tar cfv p2.tar Makefile Bucket.hpp Edge.hpp Geometry.hpp Geometry.cpp Line.cpp Line.hpp main.cpp Point.hpp Polygon.hpp Polygon.cpp threeD.cpp threeD.hpp shapes.jpg README.md
+	tar cfv p2.tar Makefile Bucket.hpp Edge.hpp Geometry.hpp Geometry.cpp Line.cpp Line.hpp main.cpp Point.hpp Polygon.hpp Polygon.cpp threeD.cpp threeD.hpp shapes.jpg README.md file.txt
