@@ -436,20 +436,26 @@ void display(){
     
     // draw curves
     for(auto curve: all_curves){
+        
+        // set up points depending on type
         curve->Setup();
+        
+        // map to NDC
+        if(curve->type == Bezier){
+            for(int i = 0; i < curve->bezier_pts.size(); i++){
+                maptToNDC(curve->bezier_pts[i].x, curve->bezier_pts[i].y);
+            }
+        }
+        else if(curve->type == Spline){
+            for(int i = 0; i < curve->boor_pts.size(); i++){
+                maptToNDC(curve->boor_pts[i].x, curve->boor_pts[i].y);
+            }
+        }
+        
+        // draw lines
         curve->Draw();
     }
-    
-//    for(int i = 0; i < all_curves.size(); i++){
-//
-//        // map control points to NDC
-//        for(int j = 0; j < all_curves[i]->control_pts.size(); j++){
-//            maptToNDC(all_curves[i]->control_pts[j].x, all_curves[i]->control_pts[j].y);
-//        }
-//        
-//        
-//        
-//    }
+ 
     
     //draws pixel on screen, width and height must match pixel buffer dimension
     glDrawPixels(window_width, window_height, GL_RGB, GL_FLOAT, PixelBuffer);
