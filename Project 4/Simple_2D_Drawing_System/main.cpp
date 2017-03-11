@@ -2,7 +2,7 @@
 //  main.cpp
 //  Simple_2D_Drawing_System
 //
-//  Created by Dimitar Vasilev on 1/12/17.
+//  Created by Dimitar Vasilev.
 //
 //
 #include "Line.hpp"
@@ -209,6 +209,7 @@ void interface(){
     int whichcurve, whichpoint;
     
     std::cout << std::endl << "What would you like to do?" << std::endl <<
+    "\t(0) Change NDC buffer size" << std::endl <<
     "\t(1) Change resolution" << std::endl <<
     "\t(2) Draw (Bezier/B-spline) curve" << std::endl <<
     "\t(3) Insert control point" << std::endl <<
@@ -222,14 +223,22 @@ void interface(){
     
     std::cout << ">> ";
     std::cin >> answer;
+    if(answer == "0"){
+    /*****************
+     * Change buffer *
+     *****************/
+        std::cout << "Current buffer size: " << buffer << std::endl;
+        std::cout << "New buffer: ";
+        std::cin >> buffer;
+    }
     
-    if(answer == "1"){
+    else if(answer == "1"){
     /*********************
      * Change resolution *
      *********************/
         std::cout << "Current resolution: " << resolution << std::endl;
         std::cout << "New resolution: ";
-        cin >> resolution;
+        std::cin >> resolution;
     }
     else if(answer == "2"){
     /*********************
@@ -243,10 +252,10 @@ void interface(){
         std::cout << ">> ";
         std::cin >> type;
         
-        if(answer == "a"){
+        if(type == "a"){
             BEZIER = true;
         }
-        else if(answer == "b"){
+        else if(type == "b"){
             BEZIER = false;
         }
         
@@ -423,24 +432,24 @@ void display(){
     glLoadIdentity();
     
     clearAllPixels();
-    
+
     
     // draw curves
-    for(int i = 0; i < all_curves.size(); i++){
-
-        // map control points to NDC
-        for(int j = 0; j < all_curves[i]->control_pts.size(); j++){
-            maptToNDC(all_curves[i]->control_pts[j].x, all_curves[i]->control_pts[j].y);
-        }
-        
-        if(all_curves[i]->type == Bezier){
-            all_curves[i]->deCasteljau();
-        }
-        else if(all_curves[i]->type == Spline){
-            all_curves[i]->deBoor();
-        }
-        
+    for(auto curve: all_curves){
+        curve->Setup();
+        curve->Draw();
     }
+    
+//    for(int i = 0; i < all_curves.size(); i++){
+//
+//        // map control points to NDC
+//        for(int j = 0; j < all_curves[i]->control_pts.size(); j++){
+//            maptToNDC(all_curves[i]->control_pts[j].x, all_curves[i]->control_pts[j].y);
+//        }
+//        
+//        
+//        
+//    }
     
     //draws pixel on screen, width and height must match pixel buffer dimension
     glDrawPixels(window_width, window_height, GL_RGB, GL_FLOAT, PixelBuffer);
@@ -484,7 +493,6 @@ void keyboard(unsigned char key, int, int){
                 std::cout << "Invalid  answer please try again" <<std::endl;
                 whichpoint = findPoint(poly);
             }
-            
             
             answer = beforeOrAfter();
             while(answer != "a" && answer != "b"){
@@ -699,7 +707,7 @@ int main(int argc, char *argv[]){
     
     
     glClearColor(0, 0, 0, 0); //clears the buffer of OpenGL
-    glutMainLoop();//main display loop, will display until terminate
+    glutMainLoop();   //main display loop, will display until terminate
     return 0;}
 
 

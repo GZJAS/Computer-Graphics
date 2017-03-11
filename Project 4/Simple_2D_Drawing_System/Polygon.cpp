@@ -14,21 +14,41 @@ extern int resolution;
 // constructor
 Polygon::Polygon(std::vector<Point > points){
     control_pts = points;
-
     id = global_id++;
+}
+
+// calculator points to draw lines between
+void Polygon::Setup(){
+    if(type == Bezier){
+        deCasteljau();
+    }
+    else if(type == Spline){
+        deBoor();
+    }
+}
+
+// draw lines
+void Polygon::Draw(){
+    if(type == Bezier){
+        for(int i = 0; i < bezier_pts.size() - 1; i++){
+            Line line(bezier_pts.at(i), bezier_pts.at(i+1));
+            line.color = color;
+            line.lineDDA();
+        }
+
+    }
+    if(type == Spline){
+        for(int i = 0; i < boor_pts.size() - 1; i++){
+            Line line(boor_pts.at(i), boor_pts.at(i+1));
+            line.color = color;
+            line.lineDDA();
+        }
+    }
 }
 
 
 int Polygon::WhichInterval(double u, int start){
-//    while(knots.at(i-1) <= u){
-//        if(knots.at(i+1) > u){
-//            return i;
-//        }
-//        i++;
-//    }
-//    return -1;
-    
-    
+
     for(int i=start;i<=knots.size()-1;i++)
     {
         if(u >= knots.at(i) && knots.at(i+1) >= u)
@@ -63,7 +83,6 @@ Point Polygon::getBoorPt(float u, int I){
 
 
 
-
 // create B-spline curve
 void Polygon::deBoor(){
     
@@ -80,16 +99,6 @@ void Polygon::deBoor(){
         Point pt = getBoorPt(u, I);
         boor_pts.push_back(pt);
     }
-    
-    
-    // create lines
-    for(int i = 0; i < boor_pts.size() - 1; i++){
-        Line line(boor_pts.at(i), boor_pts.at(i+1));
-        line.color = color;
-        line.lineDDA();
-    }
-
-
  }
     
 
@@ -130,14 +139,6 @@ void Polygon::deCasteljau(){
 
         Point pt = getBzrPt(i);
         bezier_pts.push_back(pt);
-    }
-    
-    
-    // create lines
-    for(int i = 0; i < bezier_pts.size() - 1; i++){
-        Line line(bezier_pts.at(i), bezier_pts.at(i+1));
-        line.color = color;
-        line.lineDDA();
     }
     
 }

@@ -40,7 +40,8 @@ public:
     /* member functions */
     // constructor
     Polygon(std::vector<Point> points);
-
+    void Setup();
+    void Draw();
     
     Point getBzrPt(float t);
     Point getBoorPt(float u, int I);
