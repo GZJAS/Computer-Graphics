@@ -10,7 +10,6 @@
 
 extern float xmin, xmax, ymin, ymax;
 extern int window_width, window_height;
-enum{TOP=0x1,BOTTOM=0x2,RIGHT=0x4,LEFT=0x8};
 void setPixel(int x, int y, Color c);
 
 
@@ -45,7 +44,7 @@ void Line::lineDDA()
     y = p1.y;
     
     
-    for (iCount=1; iCount<=iSteps; iCount++)
+    for (iCount=0; iCount<=iSteps; iCount++)
     {
 
         setPixel(x, y, color);

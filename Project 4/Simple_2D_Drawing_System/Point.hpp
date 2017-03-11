@@ -16,7 +16,6 @@ struct Point {
     
     Point(){}
     
-    
     Point operator+(const Point &p){
         return Point(x + p.x, y + p.y);
     }
@@ -27,9 +26,22 @@ struct Point {
     
     Point operator*(const float &c){
         return Point(x * c, y * c);
-        
     }
     
+    Point &operator=(const Point &p){
+        this->x = p.x;
+        this->y = p.y;
+        return *this;
+    }
     
+    bool operator==(const Point &p){
+        if(this->x == p.x && this->y == p.y){
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
 };
 #endif /* Point_h */

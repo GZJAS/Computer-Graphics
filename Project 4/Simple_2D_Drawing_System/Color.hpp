@@ -9,6 +9,8 @@
 #ifndef Color_h
 #define Color_h
 #include <iostream>
+#include <cstdlib>
+
 struct Color {
     float r;
     float g;
