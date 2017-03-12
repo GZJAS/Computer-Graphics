@@ -27,8 +27,11 @@ void Polygon::Setup(){
     }
 }
 
+
+
 // draw lines
 void Polygon::Draw(){
+    
     if(type == Bezier){
         for(int i = 0; i < bezier_pts.size() - 1; i++){
             Line line(bezier_pts.at(i), bezier_pts.at(i+1));

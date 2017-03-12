@@ -327,9 +327,9 @@ void interface(){
                 std::cin >> newk;
             }
             
-            poly->k = newk;
-            poly->createKnotVector();
-//            poly->setKValue(newk);
+//            poly->k = newk;
+//            poly->createKnotVector();
+            poly->setKValue(newk);
         }
 
     }
@@ -385,7 +385,7 @@ void interface(){
     /*****************
      * Write to File *
      *****************/
-        std::ofstream outputFile("outfile.txt", std::ios::out);
+        std::ofstream outputFile("file.txt", std::ios::out);
         
         // exit program if unable to create file
         if(!outputFile){
@@ -580,6 +580,17 @@ void keyboard(unsigned char key, int, int){
     }
 }
 
+void special_input(int key, int x, int y){
+    switch(key){
+        case GLUT_KEY_RIGHT:
+            
+            break;
+        case GLUT_KEY_LEFT:
+            
+            break;
+    }
+}
+
 void mouse_click(int button, int state, int x, int y)
 {
     if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN)
@@ -707,9 +718,10 @@ int main(int argc, char *argv[]){
     // mouse event handlers
     glutMouseFunc(mouse_click);
     
-    
     // handler for keyboard input
     glutKeyboardFunc(keyboard);
+    
+    glutSpecialFunc(special_input);
     
     
     glClearColor(0, 0, 0, 0); //clears the buffer of OpenGL
